@@ -9,6 +9,7 @@ from viewmodel.viewmodel import ViewModel
 
 if __name__ == "__main__":
     logger.info("Start NetLogger")
-    app = MainView(ViewModel)
+    viewmodel = ViewModel()
+    app = MainView(viewmodel)
     app.mainloop()
     

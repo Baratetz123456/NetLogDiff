@@ -1,8 +1,6 @@
 from typing import Final
 
 class Const:
-    WINDOW_HEIGHT: Final = 800
-    WINDOW_WIDTH: Final 1700
     WINDOW_ERROR: Final = "window_error"
     
     TITLE: Final = "NetLogDiff"
