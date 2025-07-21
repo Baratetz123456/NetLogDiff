@@ -55,8 +55,8 @@ class MainView(tk.Tk):
         self.paned.add(left_frame, minsize=50)
         self.paned.add(right_frame, minsize=50)
 
-        log_cmp_res = LogComparisonResultView(right_frame, self)
-        device_status_tbl = DeviceStatusTableView(left_frame, self, log_cmp_res)
+        log_cmp_res = LogComparisonResultView(self)
+        device_status_tbl = DeviceStatusTableView(self, log_cmp_res)
 
         self.setup_traces()
 

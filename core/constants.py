@@ -14,6 +14,12 @@ class Const:
     ABNORMAL_COLOR: Final = "#ffcdd2"
     BLANK_COLOR: Final = "#a6a6a6"
     
+    COLLECT_LOG_BTN: Final = "Collect logs"
+    PRE_LOG_FOLDER_BTN: Final = "Select Pre-log Folder"
+    POST_LOG_FOLDER_BTN: Final = "Select Post-log Folder"
+    COMPARE_BTN: Final = "Compare Start"
+    EXPORT_BTN: Final = "Export Result"
+    
     PRE_IMPORT_TITLE: Final = "Pre-log path selection"
     POST_IMPORT_TITLE: Final = "Post-log path selection"
     
