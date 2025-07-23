@@ -23,6 +23,10 @@ class Const:
     PRE_IMPORT_TITLE: Final = "Pre-log path selection"
     POST_IMPORT_TITLE: Final = "Post-log path selection"
     
+    PRE_IMP_ERR: Final = "pre_log_import_error"
+    POST_IMP_ERR: Final = "post_log_import_error"
+    EXP_CMP_ERR: Final = "export_comparison_log_error"
+    
     PRE_PATH_EMPTY_ERR: Final = "pre_log_path_empty_error"
     POST_PATH_EMPTY_ERR: Final = "post_log_path_empty_error"
     
