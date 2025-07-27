@@ -5,8 +5,8 @@ from core.constants import Const
 
 
 class LogPanelView(ttk.Frame):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         # Shared font for text and line numbers
         self.text_font = tkfont.Font(family="Courier New", size=12)
 

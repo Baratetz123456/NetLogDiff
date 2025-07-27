@@ -18,7 +18,7 @@ class DeviceConfigManager:
         self.hostname_with_commands = {}
 
         self.import_config()
-        
+        self.get_hostname_with_commands()
         
     def __iter__(self):
         return iter(self.__data)
@@ -125,10 +125,17 @@ class DeviceConfigManager:
         return value == "TRUE"        
         
     def clean_data(self, data: Dict[str, str]):
-        return {k.strip(): v.strip() for k, v in data.items()}
+        return {k.strip(): str(v).strip() for k, v in data.items()}
     
-    def get_show_commands(self, hostname: str):
-        return self.hostname_with_commands.get(hostname)
+    def get_show_commands(self, hostname: str=None) -> List[str]:
+        commands = []
+        
+        if hostname is not None:
+            return self.hostname_with_commands.get(hostname)
+        
+        _ = list(map(lambda x: commands.extend(x), self.hostname_with_commands.values()))
+        
+        return list(set(commands))
     
     def filter_hosts_with_commands(self, hosts: Dict[str, str]):
         return dict(filter(lambda x: x[0] in self.hostname_with_commands, hosts.items()))

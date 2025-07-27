@@ -17,8 +17,6 @@ from model.sys_config_manager import SystemConfigManager
 class ViewModel:
     def __init__(self):
         self.sys_cofig = SystemConfigManager()
-        self.init_tk_variables()
-
         self.log_model = LogManager()
 
         # Import device configurations and show commands
@@ -33,7 +31,7 @@ class ViewModel:
         self.import_net_inventory()
         self.import_log_inventory()
 
-        self.sync_net_inventory_data()
+        # self.sync_net_inventory_data()
 
     def import_device_config(self) -> bool:
         """
@@ -45,11 +43,11 @@ class ViewModel:
 
             # If device config is initialized and has devices, return success
             if self.device_config:
+                logger.info("Network device configuration imported successfully.")
                 return True
 
         except Exception as e:
-            # Set configuration status message on failure
-            self.config_status.set(str(e))
+            raise e
 
         # Return False if initialization failed or no devices found
         return False

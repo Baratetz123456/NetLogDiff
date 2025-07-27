@@ -29,7 +29,7 @@ class SystemConfigManager:
         
         try:
             path = resource_path(self.SYS_CONFIG_PATH)
-            print(path)
+            
             with open(path, mode="r", encoding="utf-8") as file:
                 self.__data = json.load(file)
                 logger.info("System configuration imported successfully.")

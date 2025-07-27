@@ -13,7 +13,7 @@ class LogComparisonResultView:
         self.create_comparison_log_panels()
         
     def create_labels(self):
-        top_frame = ttk.Frame(self)
+        top_frame = ttk.Frame(self.parent)
         top_frame.pack(side=tk.TOP, fill=tk.X, padx=5)
         
         comparison_result_lbl = ttk.Label(top_frame, text=Const.COMPARISON_LBL)
@@ -32,7 +32,7 @@ class LogComparisonResultView:
         post_log_lbl.pack(side=tk.TOP, anchor="e")
                 
     def create_comparison_log_panels(self):
-        self.log_panel = LogPanelView(self)
+        self.log_panel = LogPanelView(self.parent)
         self.log_panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
     def get_blank_lines(self, ref_str):

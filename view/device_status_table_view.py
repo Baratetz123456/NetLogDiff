@@ -8,15 +8,17 @@ from core.messages import show_message
 
 
 class DeviceStatusTableView:
-    def __init__(self, parent, log_cmp_res):
+    def __init__(self, parent, vm, log_cmp_res):
         self.parent = parent
+        self.vm = vm
+        
         self.log_cmp_res = log_cmp_res
         self.table_column_map = []
         
         self.log_collected_date = tk.StringVar()
         self.log_compared_date = tk.StringVar()
         
-        btn_mframe = ttk.Frame(self)
+        btn_mframe = ttk.Frame(self.parent)
         btn_mframe.pack(side=tk.TOP, fill=tk.X, padx=5)
         
         btn_lframe = ttk.Frame(btn_mframe)
@@ -27,7 +29,7 @@ class DeviceStatusTableView:
         
         self.create_main_buttons(btn_lframe, btn_rframe)
         
-        lbl_mframe = ttk.Frame(lbl_mframe)
+        lbl_mframe = ttk.Frame(self.parent)
         lbl_mframe.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(10, 0))
         
         lbl_lframe = ttk.Frame(lbl_mframe)
@@ -38,13 +40,19 @@ class DeviceStatusTableView:
         
         self.create_labels(lbl_lframe, lbl_rframe)
         
-        exp_frame = ttk.Frame(self)
+        # Table frame
+        tbl_frame = ttk.Frame(self.parent)
+        tbl_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.create_table(tbl_frame, self.vm.get_show_commands_helper())
+        
+        exp_frame = ttk.Frame(self.parent)
         exp_frame.pack(side=tk.TOP, anchor="e", fill=tk.X)
         
         self.create_export_btn(exp_frame)
         
         self.display_execution_timestamp()
-        self.populate_table(self.parent.vm.get_table_data)
+        self.populate_table(vm.get_table_data())
         
     def create_main_buttons(self, left_frame, right_frame):
         self.collect_logs_btn = ttk.Button(left_frame, text=Const.COLLECT_LOG_BTN, command=self.collect_logs_helper)
@@ -106,7 +114,7 @@ class DeviceStatusTableView:
         
     def create_export_btn(self, exp_frame):
         self.export_btn = ttk.Button(exp_frame, text=Const.EXPORT_BTN, command=self.export_comparison_logs)
-        self.export_btn.pack(side=tk.RIDGE, anchor="e", padx=(10, 0), pady=10)
+        self.export_btn.pack(side=tk.RIGHT, anchor="e", padx=(10, 0), pady=10)
         
     def populate_table(self, table_data):
         logger.info("Populating table data.")
@@ -121,14 +129,14 @@ class DeviceStatusTableView:
             else:
                 self.tree.insert("", tk.END, iid=str(index), values=data)
         
-        self.update_idletasks()
+        self.parent.update_idletasks()
     
     def get_pre_log_path(self):
         file_path = filedialog.askdirectory(title="Pre-log directory", initialdir=".")
         
         if file_path:
             try:
-                self.parent.vm.load_pre_log_files(file_path)
+                self.vm.load_pre_log_files(file_path)
                 
             except Exception as e:
                 show_message(Const.PRE_IMP_ERR, error=e)
@@ -140,7 +148,7 @@ class DeviceStatusTableView:
         
         if file_path:
             try:
-                self.parent.vm.load_post_log_files(file_path)
+                self.vm.load_post_log_files(file_path)
                 
             except Exception as e:
                 show_message(Const.POST_IMP_ERR, error=e)
@@ -152,7 +160,7 @@ class DeviceStatusTableView:
         
         if file_path:
             try:
-                self.parent.vm.export_comparison_logs_helper(file_path)
+                self.vm.export_comparison_logs_helper(file_path)
                 
             except Exception as e:
                 show_message(Const.EXP_CMP_ERR, error=e)
@@ -170,11 +178,11 @@ class DeviceStatusTableView:
         return new_list
     
     def collect_logs_helper(self):
-        self.parent.vm.collect_logs_helper()
+        self.vm.collect_logs_helper()
         self.reload_table_data()
         
     def compare_logs_helper(self):
-        self.parent.vm.compare_logs_helper()
+        self.vm.compare_logs_helper()
         self.reload_table_data()
         
     def reload_table_data(self):
@@ -183,7 +191,7 @@ class DeviceStatusTableView:
         self.tree.delete(*self.tree.get_children())
         
         # Insert new results
-        self.populate_table(self.parent.vm.get_table_data())
+        self.populate_table(self.vm.get_table_data())
         self.display_execution_timestamp()
         
         # Reload the UI table
@@ -217,8 +225,8 @@ class DeviceStatusTableView:
     def display_execution_timestamp(self):
         logger.info("Display execution timestamp.")
         
-        log_col_tsmp = self.parent.vm.get_log_collection_timestamp()
-        log_cmp_tsmp = self.parent.vm.get_log_comparison_timestamp()
+        log_col_tsmp = self.vm.get_log_collection_timestamp()
+        log_cmp_tsmp = self.vm.get_log_comparison_timestamp()
         
         self.log_collected_date.set(f"Latest log collected: {log_col_tsmp}")
         self.log_compared_date.set(f"Latest log collected: {log_cmp_tsmp}")

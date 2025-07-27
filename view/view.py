@@ -16,27 +16,28 @@ from .device_status_table_view import DeviceStatusTableView
 
 
 class MainView(tk.Tk):
-    def __init__(self, viewmodel: ViewModel):
+    def __init__(self):
         super().__init__()
-        self.vm = viewmodel
+        self.vm = self.create_viewmodel()
+        
+        if not self.vm:
+            self.destroy()
+            return
 
         if not self.validate_screen_resolution():
             return
-
+        
         if not self.set_window_dimensions():
             return
 
-        viewmodel.init_tk_variables()
+        self.vm.init_tk_variables()
 
         if not self.set_window_title():
             return
-
+        
         if not self.set_icon():
             return
-
-        if not self.validate_config_init():
-            return
-
+        
         set_window_center(self)
         self.config_style()
 
@@ -55,13 +56,22 @@ class MainView(tk.Tk):
         self.paned.add(left_frame, minsize=50)
         self.paned.add(right_frame, minsize=50)
 
-        log_cmp_res = LogComparisonResultView(self)
-        device_status_tbl = DeviceStatusTableView(self, log_cmp_res)
+        log_cmp_res = LogComparisonResultView(right_frame)
+        device_status_tbl = DeviceStatusTableView(left_frame, self.vm, log_cmp_res)
 
         self.setup_traces()
 
         self.after(100, lambda: self.paned.sash_place(0, 850, 0))
+        
 
+    def create_viewmodel(self):
+        try:
+            return ViewModel()
+            
+        except Exception as e:
+            show_message(Const.INIT_ERROR, msg=e)
+            return
+            
     def config_style(self):
         btn_font = font.Font(family="Arial", size=10, weight="bold")
         lbl_font = font.Font(family="Arial", size=10, weight="bold")
@@ -101,7 +111,7 @@ class MainView(tk.Tk):
             return False
 
         self.iconbitmap(icon_path)
-        return
+        return True
 
     def validate_screen_resolution(self) -> bool:
         width, height = self.vm.get_window_dimensions_helper()
@@ -126,22 +136,6 @@ class MainView(tk.Tk):
             return False
 
         return True
-
-    def validate_config_init(self) -> bool:
-        # When an import error occurs
-        if bool(self.vm.config_status.get()):
-            show_message(Const.INIT_ERROR, msg=self.vm.config_status.get())
-            self.destroy()
-            return False
-
-        # When there were no network devices detected
-        elif self.vm.config_content_status.get():
-            show_message(self.vm.config_content_status.get())
-            self.destroy()
-            return False
-
-        else:
-            return True
 
     def setup_traces(self):
         for var in [
