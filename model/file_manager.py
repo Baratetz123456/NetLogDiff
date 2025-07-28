@@ -6,25 +6,18 @@ from typing import Dict, List, Final
 
 from core.syslogger import logger
 from core.constants import Const
-
+from core.timestamp_services import shared_timestamp_service
 
 class FileManager:
-    LOCATION: Final = "Asia/Manila"
-    TIMESTAMP_TEMP: Final = "%Y%m%d_%H%M%S"
-    
     def __init__(self):
-        self.__timezone = pytz.timezone(self.LOCATION)
-        self.date_time = datetime.now(self.__timezone)
-        self.date_today = self.date_time.today().strftime("%Y%m%d")
-        self.prev_cmp_log_dir = ""
-        
+        self.prev_cmp_log_dir = ""        
         self.timestamp_cmp_log = ""
         self.dir_cmp_log = ""
         
     def generate_host_paths(self, hostnames: List[str]) -> Dict[str, str]:
         paths = {}
         folder_name = "logs"
-        dt_hm = self.date_time.today().strftime(self.TIMESTAMP_TEMP)
+        dt_hm = shared_timestamp_service.generate_timestamp()
         directory = self.get_current_log_dir(folder_name)
         
         for host in hostnames:
@@ -35,17 +28,18 @@ class FileManager:
         return paths
     
     def set_comparison_log_timestamp(self):
-        self.timestamp_cmp_log = self.date_time.today().strftime(self.TIMESTAMP_TEMP)
+        self.timestamp_cmp_log = shared_timestamp_service.generate_timestamp()
         
     def get_comparison_log_dir(self, hostname: str, command: str):
         filename = f"{hostname}_{command}_{self.timestamp_cmp_log}.log"
         path = Path(hostname) / filename
         
         return path
-    
+        
     def get_current_log_dir(self, folder_name: str):
-        time = self.date_time.today().strftime("%H%M")
-        path = Path(folder_name) / self.date_today / time
+        time = shared_timestamp_service.generate_timestamp_by_hm()
+        date = shared_timestamp_service.generate_timestamp_by_date()
+        path = Path(folder_name) / date / time
         
         if FileManager.create_directory(path):
             return path
@@ -64,10 +58,7 @@ class FileManager:
         except Exception as e:
             logger.error(e)
             return False
-        
-    def get_timestamp(self):
-        return self.date_time.today().strftime("%b %d, %Y %I:%M %p")
-    
+            
     def extract_logs(self, logs):
         logger.info("Extract logs from log inventory.")
         self.set_comparison_log_timestamp()
@@ -87,14 +78,15 @@ class FileManager:
                 
         return logs_to_export
 
-
-class ExportLogManager:
     @classmethod
-    def export(cls, filename: str, logs: dict) -> str:
+    def export(cls, path, logs: dict) -> str:
         logger.info("Exporting logs.")
         
+        filename = f"comparison_log_{cls.timestamp_cmp_log}.zip"
+        file_path = Path(path) / filename
+    
         try:
-            with zipfile.ZipFile(filename, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(file_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
                 for cmd_data in logs.values():
                     for log_path, data, in cmd_data.items():
                         zipf.writestr(log_path, data)

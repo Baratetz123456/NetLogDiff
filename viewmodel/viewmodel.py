@@ -1,9 +1,10 @@
-import os
 import tkinter as tk
+from pathlib import Path
 from typing import Dict, List
 
 from core.syslogger import logger
 from core.constants import Const
+from core.timestamp_services import shared_timestamp_service
 
 from model.log_manager import LogManager
 from model.device_config_manager import DeviceConfigManager
@@ -124,7 +125,8 @@ class ViewModel:
         self.net_inventory.update_log_collection_stats(self.log_model.device_log_stats)
 
         # Update execution timestamp
-        timestamp = self.file_manager.get_timestamp()
+        shared_timestamp_service.refresh()
+        timestamp = shared_timestamp_service.generate_timestamp()
         self.exec_timestamp.update_log_collection_timestamp(timestamp)
 
         if result == Const.LOG_COLL_BAD or result == Const.LOG_COLL_SKIP:
@@ -138,3 +140,48 @@ class ViewModel:
         self.log_model.store_network_logs(host_paths)
 
         self.collect_status.set(result)
+
+    def load_pre_log_files(self, folder_path: str):
+        pass
+    
+    def load_post_log_files(self, folder_path: str):
+        pass
+    
+    def get_log_filesnames(self, path: str):
+        pass
+    
+    def compare_logs_helper(self):
+        result = self.log_model.compare_logs()
+        
+        if result == Const.COMP_LOG_GOOD:
+            # Update log inventory with comparison result
+            self.log_inventory.update(self.log_model.comparison_result)
+            self.log_inventory.write()
+            
+            log_results = self.log_inventory.get_log_data()
+            
+            # Sync updates of log inventory to network inventory for table data
+            self.net_inventory.bulk_update(log_results)
+            
+            # Update execution timestamp
+            shared_timestamp_service.refresh()
+            timestamp = shared_timestamp_service.generate_timestamp()
+            self.exec_timestamp.update_log_comparison_timestamp(timestamp)
+        
+    def export_comparison_logs_helper(self, path: str):
+        path = Path(path)
+        
+        if not path.exists():
+            self.export_status.set(Const.EXP_INVALID_PATH)
+            return
+        
+        if not self.log_inventory:
+            self.export_status.set(Const.EXP_NO_DATA)
+            return
+        
+        logs_to_export = self.file_manager.extract_logs(self.log_inventory)
+        export_result = self.file_manager.export(path, logs_to_export)
+        
+        self.export_status.set(export_result)
+    
+    
