@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
-from typing import Final
+from typing import Final, Dict, List
 
 from core.syslogger import logger
 from core.constants import Const
 from core.utility import resource_path
+from core.timestamp_services import shared_timestamp_service
 
 from model.file_manager import FileManager
 
@@ -65,4 +66,28 @@ class LogInventoryManager:
     
     def get_log_data(self):
         return self.__data
+    
+    def get_export_logs(self) -> Dict[str, str]:
+        logger.info("Get logs for export purpose.")
         
+        shared_timestamp_service.refresh()
+        timestamp_cmp_log = shared_timestamp_service.generate_timestamp()
+        logs_to_export = {}
+                
+        for hostname, cmd_data in self.__data.items():
+            for cmd, data in cmd_data.items():
+                output = data.get("text_log_output")
+                
+                if output is None or not output:
+                    logger.error(f"No logs to export for {cmd} from {hostname}.")
+                    continue
+                
+                export_output = "\n".join(output)
+                
+                # Construct filename with timestamp
+                filename = f"{hostname}_{cmd}_{timestamp_cmp_log}.log"
+                path = Path(hostname) / filename
+                
+                logs_to_export.setdefault(hostname, {}).update({path: export_output})
+                
+        return logs_to_export

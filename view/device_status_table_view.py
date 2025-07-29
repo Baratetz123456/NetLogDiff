@@ -160,7 +160,7 @@ class DeviceStatusTableView:
         
         if file_path:
             try:
-                self.vm.export_comparison_logs_helper(file_path)
+                self.vm.export_comparison_logs(file_path)
                 
             except Exception as e:
                 show_message(Const.EXP_CMP_ERR, error=e)

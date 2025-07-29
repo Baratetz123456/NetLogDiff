@@ -142,46 +142,113 @@ class ViewModel:
         self.collect_status.set(result)
 
     def load_pre_log_files(self, folder_path: str):
-        pass
-    
+        # Check if any hostnames have show command configs
+        if not self.device_config.has_hostnames_with_commands():
+            self.pre_log_status.set(Const.NO_SH_CMD_CONF_PRE)
+            return
+
+        # Get filenames from folder
+        filenames = self.get_log_filesnames(folder_path)
+
+        if not filenames:
+            self.pre_log_status.set(Const.PRE_PATH_INVALID_FILENAME_ERR)
+            return
+
+        # Import logs
+        imported_logs = self.log_model.import_logs(folder_path, filenames)
+
+        if not imported_logs:
+            self.pre_log_status.set(Const.NO_VALID_LOG_HOST_PRE)
+            return
+
+        # Filter logs by hostnames that have configured commands
+        filtered_logs = self.device_config.filter_hosts_with_commands(imported_logs)
+
+        if not filtered_logs:
+            self.pre_log_status.set(Const.NO_VALID_LOG_HOST_PRE)
+            return
+
+        # Save filtered logs
+        self.log_model.pre_logs = filtered_logs
+
     def load_post_log_files(self, folder_path: str):
-        pass
-    
-    def get_log_filesnames(self, path: str):
-        pass
-    
+        # Check if any hostnames have show command configs
+        if not self.device_config.has_hostnames_with_commands():
+            self.post_log_status.set(Const.NO_SH_CMD_CONF_POST)
+            return
+
+        # Get filenames from folder
+        filenames = self.get_log_filesnames(folder_path)
+
+        if not filenames:
+            self.post_log_status.set(Const.POST_PATH_INVALID_FILENAME_ERR)
+            return
+
+        # Import logs
+        imported_logs = self.log_model.import_logs(folder_path, filenames)
+
+        if not imported_logs:
+            self.post_log_status.set(Const.NO_VALID_LOG_HOST_POST)
+            return
+
+        # Filter logs by hostnames that have configured commands
+        filtered_logs = self.device_config.filter_hosts_with_commands(imported_logs)
+
+        if not filtered_logs:
+            self.post_log_status.set(Const.NO_VALID_LOG_HOST_POST)
+            return
+
+        # Save filtered logs
+        self.log_model.post_logs = filtered_logs
+
+    def get_log_filesnames(self, path: str) -> List[str]:
+        # Validate input paths
+        path = Path(path)
+
+        if not path.is_dir():
+            logger.error(f"Invalid file path: {path}")
+            return []
+
+        filenames = [
+            f.name for f in path.iterdir() if f.is_file() and f.suffix.lower() == ".log"
+        ]
+
+        if not filenames:
+            logger.warning(f"No .log files found in: {path}")
+
+        return filenames
+
     def compare_logs_helper(self):
         result = self.log_model.compare_logs()
-        
+
         if result == Const.COMP_LOG_GOOD:
             # Update log inventory with comparison result
             self.log_inventory.update(self.log_model.comparison_result)
             self.log_inventory.write()
-            
+
             log_results = self.log_inventory.get_log_data()
-            
+
             # Sync updates of log inventory to network inventory for table data
             self.net_inventory.bulk_update(log_results)
-            
+
             # Update execution timestamp
             shared_timestamp_service.refresh()
             timestamp = shared_timestamp_service.generate_timestamp()
             self.exec_timestamp.update_log_comparison_timestamp(timestamp)
-        
-    def export_comparison_logs_helper(self, path: str):
+
+    def export_comparison_logs(self, path: str) -> None:
         path = Path(path)
-        
-        if not path.exists():
+
+        if not path.is_dir():
             self.export_status.set(Const.EXP_INVALID_PATH)
             return
-        
-        if not self.log_inventory:
+
+        logs_to_export = self.log_inventory.get_export_logs()
+
+        if not logs_to_export:
             self.export_status.set(Const.EXP_NO_DATA)
             return
-        
-        logs_to_export = self.file_manager.extract_logs(self.log_inventory)
+
         export_result = self.file_manager.export(path, logs_to_export)
-        
+
         self.export_status.set(export_result)
-    
-    

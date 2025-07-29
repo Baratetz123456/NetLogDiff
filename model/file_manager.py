@@ -26,19 +26,10 @@ class FileManager:
             paths.update({host: dir})
         
         return paths
-    
-    def set_comparison_log_timestamp(self):
-        self.timestamp_cmp_log = shared_timestamp_service.generate_timestamp()
-        
-    def get_comparison_log_dir(self, hostname: str, command: str):
-        filename = f"{hostname}_{command}_{self.timestamp_cmp_log}.log"
-        path = Path(hostname) / filename
-        
-        return path
         
     def get_current_log_dir(self, folder_name: str):
-        time = shared_timestamp_service.generate_timestamp_by_hm()
-        date = shared_timestamp_service.generate_timestamp_by_date()
+        time = shared_timestamp_service.generate_by_hm()
+        date = shared_timestamp_service.generate_by_date()
         path = Path(folder_name) / date / time
         
         if FileManager.create_directory(path):
@@ -58,25 +49,6 @@ class FileManager:
         except Exception as e:
             logger.error(e)
             return False
-            
-    def extract_logs(self, logs):
-        logger.info("Extract logs from log inventory.")
-        self.set_comparison_log_timestamp()
-        logs_to_export = {}
-        
-        for hostname, cmd_data in logs:
-            for cmd, data in cmd_data.items():
-                output = data.get("text_log_output")
-                
-                if output is None or not output:
-                    logger.error(f"No logs to export for {cmd} from {hostname}.")
-                    continue
-                
-                export_output = "\n".join(output)
-                dir = self.get_comparison_log_dir(hostname, cmd)
-                logs_to_export.setdefault(hostname, {}).update({dir: export_output})
-                
-        return logs_to_export
 
     @classmethod
     def export(cls, path, logs: dict) -> str:
