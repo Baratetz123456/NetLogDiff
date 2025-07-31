@@ -45,7 +45,43 @@ class LogComparisonManager:
     
     @classmethod
     def compare(cls, parsed_pre_logs, parsed_post_logs):
-        pass
+        results = {}
+        
+        for hostname, pre_logs in parsed_pre_logs.items():
+            post_logs = parsed_post_logs.get(hostname)
+            sh_cmd_results = {}
+            
+            for sh_cmd, pre_sh_cmd_log in pre_logs.items():
+                post_sh_cmd_log = post_logs.get(sh_cmd)
+                
+                if post_sh_cmd_log is None or not post_sh_cmd_log:
+                    logger.error(f"No post log found for {sh_cmd} for {hostname}.")
+                    continue
+                
+                pre_sh_cmd_log = pre_sh_cmd_log.splitlines()
+                post_sh_cmd_log = post_sh_cmd_log.splitlines()
+                
+                # Log comparison for text based results
+                line_results = cls.compare_line_by_line(
+                    pre_sh_cmd_log, post_sh_cmd_log
+                )
+                
+                if not line_results:
+                    msg = f"Unable to determine log comparison result for {hostname} with show command: {sh_cmd}"
+                    logger.error(msg)
+                    continue
+                
+                # Log comparison for UI based results
+                char_results, status = cls.compare_char_by_char(pre_sh_cmd_log, post_sh_cmd_log)
+                sh_cmd_results[sh_cmd] = {
+                    "status": cls.convert_status(status),
+                    "ui_log_output": char_results,
+                    "text_log_output": line_results
+                }
+            
+            results[hostname] = sh_cmd_results
+        
+        return results
     
     @classmethod
     def is_junk(cls, word='[TIME]'):
