@@ -16,8 +16,18 @@ class LogInventoryManager:
     
     def __init__(self):
         self.__data = {}
-        self.fetch()
+        self.init_import_data()
     
+    def init_import_data(self):
+        path = Path(self.FOLDER_PATH) / self.FILENAME
+        
+        if path.exists():
+            self.fetch()
+                
+        else:
+            logger.info("Log inventory does not exist. New file will be created.")
+            self.write()
+            
     def reset_data(self):
         self.__data = {}
         

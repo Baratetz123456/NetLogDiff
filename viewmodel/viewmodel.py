@@ -8,7 +8,7 @@ from core.timestamp_services import shared_timestamp_service
 
 from model.log_manager import LogManager
 from model.device_config_manager import DeviceConfigManager
-from model.file_manager import FileManager, ExportLogManager
+from model.file_manager import FileManager
 from model.timestamp_manager import TimestampManager
 from model.log_inventory_manager import LogInventoryManager
 from model.network_log_inventory_manager import NetworkLogInventoryManager

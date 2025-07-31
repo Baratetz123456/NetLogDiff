@@ -15,7 +15,17 @@ class NetworkLogInventoryManager:
     
     def __init__(self):
         self.__data = {}
-        self.fetch()
+        self.init_import_data()
+        
+    def init_import_data(self):
+        path = Path(self.FOLDER_PATH) / self.FILENAME
+        
+        if path.exists():
+            self.fetch()
+                
+        else:
+            logger.info("Network log inventory does not exist. New file will be created.")
+            self.write()
         
     def fetch(self):
         logger.info("Importing data for table.")

@@ -53,6 +53,9 @@ class LogPanelView(ttk.Frame):
 
         self.config_highlights(self.prelog_panel)
         self.config_highlights(self.postlog_panel)
+        
+        self.prelog_panel.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.postlog_panel.pack(side=tk.LEFT, fill=tk.BOTH)
 
     def create_panel(self, parent):
         return tk.Text(

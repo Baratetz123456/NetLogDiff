@@ -13,8 +13,8 @@ class TimestampManager:
     
     def __init__(self):
         self.__data = {self.LOG_COLL: None, self.LOG_COMP: None}
-        self.fetch()
-        
+        self.init_import_data()
+                
     @property
     def log_collection_timestamp(self):
         return self.__data.get(self.LOG_COLL, None)
@@ -22,6 +22,16 @@ class TimestampManager:
     @property
     def log_comparison_timestamp(self):
         return self.__data.get(self.LOG_COMP, None)
+    
+    def init_import_data(self):
+        path = Path(self.FOLDER_PATH) / self.FILENAME
+        
+        if path.exists():
+            self.fetch()
+                
+        else:
+            logger.info("Timestamp does not exist. New file will be created.")
+            self.write()
     
     def reset_timestamp(self):
         self.__data = {self.LOG_COLL: None, self.LOG_COMP: None}

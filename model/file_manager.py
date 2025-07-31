@@ -37,7 +37,9 @@ class FileManager:
     
     @staticmethod    
     def create_directory(path):
-        if path.exist():
+        path = Path(path)
+        
+        if path.exists():
             return True
         
         try:
