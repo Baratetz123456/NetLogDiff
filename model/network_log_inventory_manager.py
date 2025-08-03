@@ -80,13 +80,19 @@ class NetworkLogInventoryManager:
                         continue
                     
                     status = "-"
-                    sh_data = log_result.get(col)
+                    sh_data = log_result.get(host)
                     
-                    if sh_data is not None:
-                        status = sh_data.get("status", "-")
+                    if sh_data is None:
+                        self.update(host, col, status)
+                        continue
+                        
+                    sh_result = sh_data.get(col)
+                    
+                    if sh_result is not None:
+                        status = sh_result.get("status", "-")
                         
                     self.update(host, col, status)
-                    
+        
         self.write()
     
     def reset_data(self):
@@ -113,6 +119,8 @@ class NetworkLogInventoryManager:
         return None
     
     def update_log_collection_stats(self, device_log_stats: Dict[str, str]):
+        logger.info("Updating log collection status result.")
+        
         if isinstance(device_log_stats, dict) and device_log_stats:
             for hostname, status in device_log_stats.items():
                 if status:
@@ -122,28 +130,6 @@ class NetworkLogInventoryManager:
                     
             self.write()
             self.fetch()
-                
-    def filter_reachable_devices(self, device_configs):
-        reachable_devices_config = []
-        
-        for device in device_configs:
-            hostname = device["hostname"]
-            reachability_status = self.get_reachability_status(hostname)
-            
-            if not (isinstance(reachability_status, bool) and reachability_status):
-                logger.warning(f"[SKIPPED] Hostname [{hostname}] is unreachable.")
-                self.update(hostname, self.LOG, False)
-                continue
-            
-            reachable_devices_config.append(device)
-        
-        return reachable_devices_config
-    
-    def get_reachability_status(self, hostname):
-        host_data = self.__data.get(hostname)
-        
-        if host_data is not None:
-            return host_data.get(self.RCHBLTY)
     
     def set_host_default_column_values(self, hostname: str, columns: List[str]) -> None:
         self.__data.setdefault(hostname, {})
@@ -154,32 +140,21 @@ class NetworkLogInventoryManager:
     def get_data(self):
         return self.__data
     
-    def validate_devices_reachability(self, device_configs):
+    def get_reachable_devices_status(self, device_configs, reachable_devices):
+        logger.info("Updating network devices reachability status.")
+        
         if not device_configs:
             logger.error("Invalid device configuration parameter.")
             return
         
         for device in device_configs:
-            config = device_configs.create_configuration(device)
-            
-            is_reachable = self._check_device_reachability(config)
-            logger.info(f"Hostname: {device['hostname']} is {'reachable' if is_reachable else 'not reachable'}.")
+            is_reachable = device["hostname"] in reachable_devices
+            print(device["hostname"], self.RCHBLTY, is_reachable)
             self.update(device["hostname"], self.RCHBLTY, is_reachable)
             
         self.write()
         self.fetch()
-    
-    def _check_device_reachability(self, config):
-        try:
-            net_connect = ConnectHandler(**config)
-            net_connect.enable()
-            net_connect.disconnect()
-            return True
         
-        except Exception as e:
-            logger.error(f"COnnection faield: {e}")
-            return False
-    
     def sync_data(self, hostnames: List[str], show_commands: List[str]) -> None:
         logger.info("Sync network inventory.")
         

@@ -9,7 +9,6 @@ from core.timestamp_services import shared_timestamp_service
 
 from model.file_manager import FileManager
 
-
 class LogInventoryManager:
     FOLDER_PATH: Final = "data"
     FILENAME: Final = "log_inventory.json"

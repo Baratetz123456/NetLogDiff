@@ -34,7 +34,7 @@ class FileManager:
         
         if FileManager.create_directory(path):
             return path
-    
+            
     @staticmethod    
     def create_directory(path):
         path = Path(path)
@@ -43,7 +43,7 @@ class FileManager:
             return True
         
         try:
-            path.mkdir(exist_ok=True)
+            path.mkdir(exist_ok=True, parents=True)
             logger.info(f"Directory created: {path}")
             
             return True    

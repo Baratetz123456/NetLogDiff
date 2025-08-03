@@ -74,7 +74,7 @@ class DeviceStatusTableView:
         self.log_compared_lbl.pack(side=tk.LEFT, anchor="e")
     
     def create_table(self, tbl_frame, show_commands: List[str] = None):
-        stretchable = False if len(show_commands) > 2 else True
+        stretchable = False if len(show_commands) > 5 else True
         all_columns_count: int = len(show_commands) + 4
         columns: list = list(range(all_columns_count))
         
@@ -119,9 +119,13 @@ class DeviceStatusTableView:
     def populate_table(self, table_data):
         logger.info("Populating table data.")
         
+        if not isinstance(table_data, dict) or not table_data:
+            logger.error("Empty table data.")
+            return
+        
         for index, (hostname, data) in enumerate(table_data.items()):
             default_list = [index + 1, hostname]
-            data_list = self.convert_bool_to_symbols(list(data.values))
+            data_list = self.convert_bool_to_symbols(list(data.values()))
             data = tuple(default_list + data_list)
             
             if "Abnormal" in data:
@@ -132,7 +136,8 @@ class DeviceStatusTableView:
         self.parent.update_idletasks()
     
     def get_pre_log_path(self):
-        file_path = filedialog.askdirectory(title="Pre-log directory", initialdir=".")
+        logger.info("Get pre-log path.")
+        file_path = filedialog.askdirectory(title="Pre-log directory", initialdir="")
         
         if file_path:
             try:
@@ -144,7 +149,8 @@ class DeviceStatusTableView:
         self.log_cmp_res.clear_panels()
         
     def get_post_log_path(self):
-        file_path = filedialog.askdirectory(title="Post-log directory", initialdir=".")
+        logger.info("Get post-log path.")
+        file_path = filedialog.askdirectory(title="Post-log directory", initialdir="")
         
         if file_path:
             try:
@@ -195,7 +201,7 @@ class DeviceStatusTableView:
         self.display_execution_timestamp()
         
         # Reload the UI table
-        self.update_idletasks()
+        self.parent.update_idletasks()
         
     def on_cell_double_click(self, event):
         # Get reference to the Treview widget

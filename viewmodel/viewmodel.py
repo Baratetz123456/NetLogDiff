@@ -32,7 +32,7 @@ class ViewModel:
         self.import_net_inventory()
         self.import_log_inventory()
 
-        # self.sync_net_inventory_data()
+        self.sync_net_inventory_data()
 
     def import_device_config(self) -> bool:
         """
@@ -108,19 +108,13 @@ class ViewModel:
         return self.exec_timestamp.log_comparison_timestamp
 
     def collect_logs_helper(self):
-        # Validate reachability of network devices
-        self.net_inventory.validate_device_reachability(self.device_config)
-
-        # Filter only reachable network devices
-        reachable_device_config = self.net_inventory.filter_reachable_devices(
-            self.device_config
-        )
-
         # Collect logs by sending show commands to network devices
-        result = self.log_model.collect_logs(
-            self.device_config, reachable_device_config
-        )
-
+        commands = self.device_config.hostname_with_commands
+        result = self.log_model.collect_logs(self.device_config, commands)
+    
+        # Update reachability status of devices in the table
+        self.net_inventory.get_reachable_devices_status(self.device_config, self.log_model.reachable_devices)
+        
         # Update the log collection status for table data
         self.net_inventory.update_log_collection_stats(self.log_model.device_log_stats)
 
@@ -220,7 +214,7 @@ class ViewModel:
 
     def compare_logs_helper(self):
         result = self.log_model.compare_logs()
-
+        
         if result == Const.COMP_LOG_GOOD:
             # Update log inventory with comparison result
             self.log_inventory.update(self.log_model.comparison_result)
@@ -236,6 +230,8 @@ class ViewModel:
             timestamp = shared_timestamp_service.generate_timestamp()
             self.exec_timestamp.update_log_comparison_timestamp(timestamp)
 
+        self.compare_status.set(result)
+        
     def export_comparison_logs(self, path: str) -> None:
         path = Path(path)
 

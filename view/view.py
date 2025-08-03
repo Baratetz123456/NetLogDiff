@@ -56,14 +56,13 @@ class MainView(tk.Tk):
         self.paned.add(left_frame, minsize=50)
         self.paned.add(right_frame, minsize=50)
 
-        log_cmp_res = LogComparisonResultView(right_frame)
+        log_cmp_res = LogComparisonResultView(right_frame, self.vm)
         device_status_tbl = DeviceStatusTableView(left_frame, self.vm, log_cmp_res)
 
         self.setup_traces()
 
         self.after(100, lambda: self.paned.sash_place(0, 850, 0))
         
-
     def create_viewmodel(self):
         try:
             return ViewModel()
@@ -73,12 +72,8 @@ class MainView(tk.Tk):
             return
             
     def config_style(self):
-        btn_font = font.Font(family="Arial", size=10, weight="bold")
-        lbl_font = font.Font(family="Arial", size=10, weight="bold")
-
         style = ttk.Style()
-        style.configure("TButton", font=btn_font, padding=10)
-        style.configure("TLabel", font=lbl_font)
+        style.configure("TButton", padding=10)
 
     def set_window_dimensions(self):
         width, height = self.vm.get_window_dimensions_helper()

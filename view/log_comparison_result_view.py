@@ -6,8 +6,9 @@ from core.syslogger import logger
 from core.constants import Const
 
 class LogComparisonResultView:
-    def __init__(self, parent):
+    def __init__(self, parent, vm):
         self.parent = parent
+        self.vm = vm # Viewmodel
         
         self.create_labels()
         self.create_comparison_log_panels()
@@ -84,7 +85,7 @@ class LogComparisonResultView:
     def display_comparison_result(self, hostname: str, show_command: str):
         logger.info("Display log comparison result.")
         
-        show_command_results = self.parent.vm.get_host_log_comparison_result_helper(hostname)
+        show_command_results = self.vm.get_host_log_comparison_result_helper(hostname)
         
         if show_command_results is None:
             msg = f"No log comparison result found for {show_command} from {hostname}."

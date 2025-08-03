@@ -18,6 +18,9 @@ class LogComparisonManager:
                 - key = hostname
                 - value = dict of {command: output}
         """
+        logger.info("Parsing network logs.")
+        logger.info(f"Number of items to parse: {len(network_logs)}")
+                
         parsed_logs = {}
         
         for hostname, logs in network_logs.items():
@@ -45,6 +48,7 @@ class LogComparisonManager:
     
     @classmethod
     def compare(cls, parsed_pre_logs, parsed_post_logs):
+        logger.info("Compare pre-log and post-log.")
         results = {}
         
         for hostname, pre_logs in parsed_pre_logs.items():

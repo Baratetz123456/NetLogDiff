@@ -31,7 +31,7 @@ class DeviceConfigManager:
 
     def __contains__(self, item):
         return any(x.get("hostname") == item for x in self.__data)
-
+    
     def get_hostname_with_commands(self) -> None:
         """
         Get the show commands of every hostname listed in the

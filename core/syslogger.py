@@ -29,6 +29,7 @@ console_handler.setFormatter(formatter)
 
 # Rotating file handler
 file_handler = RotatingFileHandler(log_path, maxBytes=5 * 1024 * 1024, backupCount=3)
+file_handler.setFormatter(formatter)
 
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)

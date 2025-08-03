@@ -22,13 +22,12 @@ class LogPanelView(ttk.Frame):
         self.horiz_scrollbar.pack(fill=tk.X, side=tk.BOTTOM)
 
         prelog_frame = tk.Frame(self, width=400)
-        postlog_frame = tk.Frame(self, width=400)
-
         prelog_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        prelog_frame.pack_propagate(False)
+        
+        postlog_frame = tk.Frame(self, width=400)
         postlog_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        prelog_frame.pack_propagate()
-        postlog_frame.pack_propagate()
+        postlog_frame.pack_propagate(False)
 
         # Line numbers widget
         self.prelog_line_num = self.create_line_numbers(prelog_frame)
@@ -54,7 +53,10 @@ class LogPanelView(ttk.Frame):
         self.config_highlights(self.prelog_panel)
         self.config_highlights(self.postlog_panel)
         
+        self.prelog_line_num.pack(side=tk.LEFT, fill=tk.Y)
         self.prelog_panel.pack(side=tk.LEFT, fill=tk.BOTH)
+        
+        self.postlog_line_num.pack(side=tk.LEFT, fill=tk.Y)
         self.postlog_panel.pack(side=tk.LEFT, fill=tk.BOTH)
 
     def create_panel(self, parent):
