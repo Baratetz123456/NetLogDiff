@@ -81,6 +81,7 @@ class LogManager:
         
         parsed_pre_logs = LogComparisonManager.parse_log(self.pre_logs)
         parsed_post_logs = LogComparisonManager.parse_log(self.post_logs)
+        
         self.comparison_result = LogComparisonManager.compare(parsed_pre_logs, parsed_post_logs)
         
         self.reset_logs()

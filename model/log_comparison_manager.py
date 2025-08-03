@@ -5,6 +5,7 @@ from typing import Dict, List
 from core.syslogger import logger
 from core.constants import Const
 
+
 class LogComparisonManager:
     @staticmethod
     def parse_log(network_logs: Dict[str, str]) -> Dict[str, Dict[str, str]]:
@@ -18,32 +19,31 @@ class LogComparisonManager:
                 - key = hostname
                 - value = dict of {command: output}
         """
-        logger.info("Parsing network logs.")
-        logger.info(f"Number of items to parse: {len(network_logs)}")
-                
         parsed_logs = {}
-        
+
         for hostname, logs in network_logs.items():
-            # Pattern to find each hostname#show block
-            pattern = rf"(?={re.escape(hostname)}#show\s+\s+)"
-            sections = re.split(pattern, logs.strip())
             command_outputs = {}
             
-            for section in sections:
-                if not section.strip():
-                    continue
+            # Match command headers and outputs
+            pattern = re.compile(
+                rf"{re.escape(hostname)}#(show .+?)(?=\n{re.escape(hostname)}#show |\Z)", 
+                re.DOTALL
+            )
+            
+            matches = pattern.finditer(logs)
+            
+            for match in matches:
+                full_output = match.group(1).strip()
                 
-                lines = section.strip().splitlines()
+                if "\n" in full_output:
+                    command, output = full_output.split("\n", 1)
+                else:
+                    command, output = full_output, ""
                 
-                if not lines:
-                    continue
-                
-                header = lines[0].replace(f"{hostname}#","").strip()
-                content = "\n".join(lines[1:]).strip()
-                command_outputs[header] = content
-                
+                command_outputs[command.strip()] = output.strip()
+            
             parsed_logs[hostname] = command_outputs
-        
+
         return parsed_logs
     
     @classmethod

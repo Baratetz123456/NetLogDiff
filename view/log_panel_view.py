@@ -111,7 +111,7 @@ class LogPanelView(ttk.Frame):
         line_numbers.config(state=tk.NORMAL)
         line_numbers.delete(1.0, tk.END)
         
-        line_count = int(panel.index("end-c").split(".")[0])
+        line_count = int(panel.index("end").split(".")[0])
         lines = "\n".join(str(i) for i in range(1, line_count + 1))
         width = max(4, len(str(line_count)))
         
