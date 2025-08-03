@@ -233,15 +233,18 @@ class ViewModel:
         self.compare_status.set(result)
         
     def export_comparison_logs(self, path: str) -> None:
+        logger.info("Export log comparison result.")
         path = Path(path)
 
         if not path.is_dir():
+            logger.error("Invalid export path.")
             self.export_status.set(Const.EXP_INVALID_PATH)
             return
 
         logs_to_export = self.log_inventory.get_export_logs()
 
         if not logs_to_export:
+            logger.error("No data to export.")
             self.export_status.set(Const.EXP_NO_DATA)
             return
 

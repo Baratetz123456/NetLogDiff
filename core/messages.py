@@ -27,7 +27,7 @@ MESSAGE_MAP = {
     Const.EXP_GOOD:         ("info", "Export logs", "Logs exported successfully."),
     Const.EXP_BAD:          ("error", "Export logs", "Logs export failed."),
     Const.EXP_NO_DATA:      ("error", "Export logs", "There are no logs available for export."),
-
+    
     # Initialization
     Const.INIT_NO_HOST_DTC: ("error", "Initialization error", "No network devices detected for analysis."),
 }
@@ -53,6 +53,12 @@ def show_message(msg_type: str, **kwargs):
         logger.error(msg)
         return
 
+    if msg_type == Const.EXP_CMP_ERR:
+        msg = kwargs.get("error", "Unknown error.")
+        messagebox.showerror("Export Error", msg)
+        logger.error(msg)
+        return
+    
     if msg_type in MESSAGE_MAP:
         level, title, msg = MESSAGE_MAP[msg_type]
         if level == "info":

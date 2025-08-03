@@ -54,21 +54,22 @@ class FileManager:
 
     @classmethod
     def export(cls, path, logs: dict) -> str:
-        logger.info("Exporting logs.")
+        logger.info("Exporting logs.test")
         
-        filename = f"comparison_log_{cls.timestamp_cmp_log}.zip"
+        dt_hm = shared_timestamp_service.generate_timestamp()
+        filename = f"comparison_log_{dt_hm}.zip"
         file_path = Path(path) / filename
-    
+        
         try:
             with zipfile.ZipFile(file_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
                 for cmd_data in logs.values():
                     for log_path, data, in cmd_data.items():
-                        zipf.writestr(log_path, data)
+                        zipf.writestr(str(log_path), data)
             
         except Exception as e:
-            logger.error(e)
-            return Const.EXPORT_BAD
+            logger.error(f"Error encounterd during export: {e}")
+            return Const.EXP_BAD
         
-        return Const.EXPORT_GOOD
+        return Const.EXP_GOOD
         
         
