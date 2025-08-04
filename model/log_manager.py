@@ -6,7 +6,7 @@ from netmiko import ConnectHandler
 
 from core.syslogger import logger
 from core.constants import Const
-from core.utility import resource_path
+from core.utility import Utility
 
 
 from .log_comparison_manager import LogComparisonManager

@@ -7,7 +7,6 @@ from viewmodel.viewmodel import ViewModel
 from core.syslogger import logger
 from core.constants import Const
 from core.messages import show_message
-from core.utility import resource_path
 
 # from .log_panel_view import LogPanelView
 from .utility_view import set_window_center

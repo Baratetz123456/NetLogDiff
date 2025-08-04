@@ -5,7 +5,7 @@ from typing import Final, List, Dict
 
 from core.syslogger import logger
 from core.constants import Const
-from model.file_manager import FileManager
+from core.utility import Utility
 
 class NetworkLogInventoryManager:
     FOLDER_PATH: Final = "data"
@@ -46,7 +46,7 @@ class NetworkLogInventoryManager:
     
     def write(self):
         try:
-            if not FileManager.create_directory(self.FOLDER_PATH):
+            if not Utility.create_directory(self.FOLDER_PATH):
                 raise OSError(f"Failed to created directory: {self.FOLDER_PATH}")
             
             path = Path(self.FOLDER_PATH) / self.FILENAME

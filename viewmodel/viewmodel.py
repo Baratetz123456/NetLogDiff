@@ -4,11 +4,11 @@ from typing import Dict, List
 
 from core.syslogger import logger
 from core.constants import Const
+from core.utility import Utility
 from core.timestamp_services import shared_timestamp_service
 
 from model.log_manager import LogManager
 from model.device_config_manager import DeviceConfigManager
-from model.file_manager import FileManager
 from model.timestamp_manager import TimestampManager
 from model.log_inventory_manager import LogInventoryManager
 from model.network_log_inventory_manager import NetworkLogInventoryManager
@@ -23,9 +23,6 @@ class ViewModel:
         # Import device configurations and show commands
         if not self.import_device_config():
             return
-
-        # Import data files and create directories
-        self.import_runtime_data_files()
 
         # Import and manage runtime json files
         self.import_execution_timestamp()
@@ -52,9 +49,6 @@ class ViewModel:
 
         # Return False if initialization failed or no devices found
         return False
-
-    def import_runtime_data_files(self):
-        self.file_manager = FileManager()
 
     def import_execution_timestamp(self):
         self.exec_timestamp = TimestampManager()
@@ -128,7 +122,7 @@ class ViewModel:
             return
 
         hostname_with_logs = self.log_model.get_hostname_with_logs()
-        host_paths = self.file_manager.generate_host_paths(hostname_with_logs)
+        host_paths = Utility.generate_host_paths(hostname_with_logs)
 
         # Store collected logs as log file
         self.log_model.store_network_logs(host_paths)
@@ -248,6 +242,6 @@ class ViewModel:
             self.export_status.set(Const.EXP_NO_DATA)
             return
 
-        export_result = self.file_manager.export(path, logs_to_export)
+        export_result = Utility.export(path, logs_to_export)
 
         self.export_status.set(export_result)

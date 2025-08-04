@@ -4,10 +4,9 @@ from typing import Final, Dict, List
 
 from core.syslogger import logger
 from core.constants import Const
-from core.utility import resource_path
+from core.utility import Utility
 from core.timestamp_services import shared_timestamp_service
 
-from model.file_manager import FileManager
 
 class LogInventoryManager:
     FOLDER_PATH: Final = "data"
@@ -46,7 +45,7 @@ class LogInventoryManager:
     
     def write(self):
         try:
-            if not FileManager.create_directory(self.FOLDER_PATH):
+            if not Utility.create_directory(self.FOLDER_PATH):
                 raise OSError(f"Failed to created directory: {self.FOLDER_PATH}")
             
             path = Path(self.FOLDER_PATH) / self.FILENAME

@@ -1,10 +1,11 @@
 import json
 from typing import Final
 from core.syslogger import logger
-from core.utility import resource_path
+from core.utility import Utility
 
 class SystemConfigManager:
     SYS_CONFIG_PATH: Final = "config/sys_config.json"
+    
     def __init__(self):
         self.__data = {}
         self.fetch()
@@ -28,7 +29,7 @@ class SystemConfigManager:
         logger.info("Importing system configurations.")
         
         try:
-            path = resource_path(self.SYS_CONFIG_PATH)
+            path = Utility.resource_path(self.SYS_CONFIG_PATH)
             
             with open(path, mode="r", encoding="utf-8") as file:
                 self.__data = json.load(file)

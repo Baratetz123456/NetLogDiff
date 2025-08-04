@@ -5,7 +5,7 @@ from typing import Dict, List, Final
 
 from core.syslogger import logger
 from core.constants import Const
-from core.utility import resource_path
+from core.utility import Utility
 
 
 class DeviceConfigManager:
@@ -60,7 +60,7 @@ class DeviceConfigManager:
             return self.imported_commands[filename]
         
         try:
-            path = resource_path(Path(self.DEFAULT_FOLDER_PATH) / filename)
+            path = Utility.resource_path(Path(self.DEFAULT_FOLDER_PATH) / filename)
             
             with open(path, mode="r") as file:
                 commands = file.readlines()
@@ -76,7 +76,7 @@ class DeviceConfigManager:
             
     def import_config(self) -> None:
         expected_headers = ["hostname", "ipaddress", "username", "password", "admin_password", "device_os", "connection_type", "skip", "show_commands"]
-        path = resource_path(self.CONFIG_FILE)
+        path = Utility.resource_path(self.CONFIG_FILE)
         
         try:
             df = pd.read_csv(path, encoding="utf-8-sig")

@@ -1,17 +1,87 @@
 import os
 import sys
+import zipfile
+from pathlib import Path
+from typing import List, Dict
 
-def resource_path(relative_path: str) -> str:
-    """Get the absolute path to resource
+from core.syslogger import logger
+from core.constants import Const
+from core.timestamp_services import shared_timestamp_service
 
-    Args:
-        relative_path (str): path
-    """
-    
-    try:
-        base_path = sys._MEIPASS
-    
-    except Exception:
-        base_path = os.path.abspath(".")
+
+class Utility:
+    @staticmethod
+    def resource_path(relative_path: str) -> str:
+        """Get the absolute path to resource
+
+        Args:
+            relative_path (str): path
+        """
         
-    return os.path.join(base_path, relative_path)
+        try:
+            base_path = sys._MEIPASS
+        
+        except Exception:
+            base_path = os.path.abspath(".")
+            
+        return os.path.join(base_path, relative_path)
+
+    @staticmethod
+    def create_directory(path: str) -> bool:
+        path = Path(path)
+        
+        if path.exists():
+            return True
+        
+        try:
+            path.mkdir(exist_ok=True, parents=True)
+            logger.info(f"Directory created: {path}")
+            
+            return True    
+        
+        except Exception as e:
+            logger.error(e)
+            return False
+    
+    @classmethod
+    def generate_host_paths(cls, hostnames: List[str]) -> Dict[str, str]:
+        paths = {}
+        folder_name = "logs"
+        dt_hm = shared_timestamp_service.generate_timestamp()
+        directory = cls.get_current_log_dir(folder_name)
+        
+        for host in hostnames:
+            filename = f"{host}_{dt_hm}.log"
+            dir = Path(directory) / filename
+            paths.update({host: dir})
+        
+        return paths
+    
+    @classmethod
+    def get_current_log_dir(cls, folder_name: str):
+        time = shared_timestamp_service.generate_by_hm()
+        date = shared_timestamp_service.generate_by_date()
+        path = Path(folder_name) / date / time
+        
+        if cls.create_directory(path):
+            return path
+    
+    @classmethod
+    def export(cls, path, logs: dict) -> str:
+        logger.info("Exporting logs.test")
+        
+        dt_hm = shared_timestamp_service.generate_timestamp()
+        filename = f"comparison_log_{dt_hm}.zip"
+        file_path = Path(path) / filename
+        
+        try:
+            with zipfile.ZipFile(file_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
+                for cmd_data in logs.values():
+                    for log_path, data, in cmd_data.items():
+                        zipf.writestr(str(log_path), data)
+            
+        except Exception as e:
+            logger.error(f"Error encounterd during export: {e}")
+            return Const.EXP_BAD
+        
+        return Const.EXP_GOOD

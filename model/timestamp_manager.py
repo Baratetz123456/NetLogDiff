@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Final
 
 from core.syslogger import logger
-from model.file_manager import FileManager
+from core.utility import Utility
 
 class TimestampManager:
     FOLDER_PATH: Final = "data"
@@ -65,7 +65,7 @@ class TimestampManager:
             
     def write(self) -> bool:
         try:
-            if not FileManager.create_directory(self.FOLDER_PATH):
+            if not Utility.create_directory(self.FOLDER_PATH):
                 raise OSError(f"Failed to create directory: {self.FOLDER_PATH}")
 
             path = Path(self.FOLDER_PATH) / self.FILENAME
