@@ -8,6 +8,7 @@ from core.syslogger import logger
 from core.constants import Const
 from core.utility import Utility
 
+from .sys_config_manager import ConfigManager
 
 from .log_comparison_manager import LogComparisonManager
 from .network_device_manager import NetworkDeviceManager
@@ -88,32 +89,6 @@ class LogManager:
         
         return Const.COMP_LOG_GOOD
     
-    def import_logs(self, folder_path: str, filenames: List[str]) -> Dict[str, List[str]]:
-        logger.info("Importing log files")
-        logger.info(f"Number of files to import: {len(filenames)}")
-        
-        host_with_logs = {}
-        
-        for filename in filenames:
-            hostname = self.extract_hostname(filename)
-            path = Path(folder_path) / filename
-            
-            try:
-                with open(path, mode="r") as file:
-                    data = file.read()
-                    host_with_logs.update({hostname: data})
-            except Exception as e:
-                logger.error(e)
-                
-        return host_with_logs
-    
-    def extract_hostname(self, filename: str) -> str:
-        pattern = r"^(.+)_\d{8}_\d{6}\.log$"
-        match = re.match(pattern, filename)
-        
-        if match:
-            return match.group(1)
-    
     def is_log_valid(self, output):
         output = output.strip().lower()
         return "invalid" not in output
@@ -162,7 +137,6 @@ class LogManager:
         
         logger.info("Network logs stored successfully.")
         return Const.LOG_COLL_FILE_SAVE_GOOD
-    
     
     def combine_logs(self, hostname:str, logs: Dict[str, str]):
         output = ""

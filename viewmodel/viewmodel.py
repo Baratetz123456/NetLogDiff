@@ -12,7 +12,7 @@ from model.device_config_manager import DeviceConfigManager
 from model.timestamp_manager import TimestampManager
 from model.log_inventory_manager import LogInventoryManager
 from model.network_log_inventory_manager import NetworkLogInventoryManager
-from model.sys_config_manager import SystemConfigManager
+from model.sys_config_manager import SystemConfigManager, ConfigManager
 
 
 class ViewModel:
@@ -136,14 +136,14 @@ class ViewModel:
             return
 
         # Get filenames from folder
-        filenames = self.get_log_filesnames(folder_path)
+        filenames = Utility.get_log_filesnames(folder_path)
 
         if not filenames:
             self.pre_log_status.set(Const.PRE_PATH_INVALID_FILENAME_ERR)
             return
 
         # Import logs
-        imported_logs = self.log_model.import_logs(folder_path, filenames)
+        imported_logs = ConfigManager.import_logs(folder_path, filenames)
 
         if not imported_logs:
             self.pre_log_status.set(Const.NO_VALID_LOG_HOST_PRE)
@@ -166,14 +166,14 @@ class ViewModel:
             return
 
         # Get filenames from folder
-        filenames = self.get_log_filesnames(folder_path)
+        filenames = Utility.get_log_filesnames(folder_path)
 
         if not filenames:
             self.post_log_status.set(Const.POST_PATH_INVALID_FILENAME_ERR)
             return
 
         # Import logs
-        imported_logs = self.log_model.import_logs(folder_path, filenames)
+        imported_logs = ConfigManager.import_logs(folder_path, filenames)
 
         if not imported_logs:
             self.post_log_status.set(Const.NO_VALID_LOG_HOST_POST)
@@ -189,30 +189,12 @@ class ViewModel:
         # Save filtered logs
         self.log_model.post_logs = filtered_logs
 
-    def get_log_filesnames(self, path: str) -> List[str]:
-        # Validate input paths
-        path = Path(path)
-
-        if not path.is_dir():
-            logger.error(f"Invalid file path: {path}")
-            return []
-
-        filenames = [
-            f.name for f in path.iterdir() if f.is_file() and f.suffix.lower() == ".log"
-        ]
-
-        if not filenames:
-            logger.warning(f"No .log files found in: {path}")
-
-        return filenames
-
     def compare_logs_helper(self):
         result = self.log_model.compare_logs()
         
         if result == Const.COMP_LOG_GOOD:
             # Update log inventory with comparison result
             self.log_inventory.update(self.log_model.comparison_result)
-            self.log_inventory.write()
 
             log_results = self.log_inventory.get_log_data()
 

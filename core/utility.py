@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -85,3 +86,29 @@ class Utility:
             return Const.EXP_BAD
         
         return Const.EXP_GOOD
+    
+    @staticmethod
+    def extract_hostname(filename: str) -> str:
+        pattern = r"^(.+)_\d{8}_\d{6}\.log$"
+        match = re.match(pattern, filename)
+        
+        if match:
+            return match.group(1)
+    
+    @staticmethod
+    def get_log_filesnames(path: str) -> List[str]:
+        # Validate input paths
+        path = Path(path)
+
+        if not path.is_dir():
+            logger.error(f"Invalid file path: {path}")
+            return []
+
+        filenames = [
+            f.name for f in path.iterdir() if f.is_file() and f.suffix.lower() == ".log"
+        ]
+
+        if not filenames:
+            logger.warning(f"No .log files found in: {path}")
+
+        return filenames

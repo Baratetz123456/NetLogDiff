@@ -7,6 +7,8 @@ from core.constants import Const
 from core.utility import Utility
 from core.timestamp_services import shared_timestamp_service
 
+from .sys_config_manager import ConfigManager
+
 
 class LogInventoryManager:
     FOLDER_PATH: Final = "data"
@@ -24,7 +26,7 @@ class LogInventoryManager:
                 
         else:
             logger.info("Log inventory does not exist. New file will be created.")
-            self.write()
+            ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
             
     def reset_data(self):
         self.__data = {}
@@ -43,25 +45,9 @@ class LogInventoryManager:
             logger.error(f"Error encountered during import: {e}")
             self.reset_data()
     
-    def write(self):
-        try:
-            if not Utility.create_directory(self.FOLDER_PATH):
-                raise OSError(f"Failed to created directory: {self.FOLDER_PATH}")
-            
-            path = Path(self.FOLDER_PATH) / self.FILENAME
-            
-            with open(path, mode="w", encoding="utf-8") as file:
-                json.dump(self.__data, file, indent=4)
-                
-            logger.info("Log inventory has been successfully updated.")
-            return True
-        
-        except Exception as e:
-            logger.error(f"Error encountered: {e}")
-            return False
-    
     def update(self, data: dict):
         self.__data = data
+        ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
         
     def __iter__(self):
         return iter(self.__data.items())
