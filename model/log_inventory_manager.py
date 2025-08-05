@@ -3,8 +3,6 @@ from pathlib import Path
 from typing import Final, Dict, List
 
 from core.syslogger import logger
-from core.constants import Const
-from core.utility import Utility
 from core.timestamp_services import shared_timestamp_service
 
 from .sys_config_manager import ConfigManager
@@ -16,35 +14,19 @@ class LogInventoryManager:
     
     def __init__(self):
         self.__data = {}
+        self.file_path = Path(self.FOLDER_PATH) / self.FILENAME
         self.init_import_data()
-    
+        
     def init_import_data(self):
         path = Path(self.FOLDER_PATH) / self.FILENAME
         
         if path.exists():
-            self.fetch()
+            self.__data = ConfigManager.import_json(self.file_path)
                 
         else:
             logger.info("Log inventory does not exist. New file will be created.")
             ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
-            
-    def reset_data(self):
-        self.__data = {}
-        
-    def fetch(self):
-        logger.info("Importing log inventory data.")
-        
-        try:
-            path = Path(self.FOLDER_PATH) / self.FILENAME
-            
-            with open(path, mode="r", encoding="utf-8") as file:
-                self.__data = json.load(file)
-                logger.info("Log inventory data successfully imported.")
-                
-        except Exception as e:
-            logger.error(f"Error encountered during import: {e}")
-            self.reset_data()
-    
+                        
     def update(self, data: dict):
         self.__data = data
         ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)

@@ -155,7 +155,7 @@ class ViewModel:
         if not filtered_logs:
             self.pre_log_status.set(Const.NO_VALID_LOG_HOST_PRE)
             return
-
+        
         # Save filtered logs
         self.log_model.pre_logs = filtered_logs
 

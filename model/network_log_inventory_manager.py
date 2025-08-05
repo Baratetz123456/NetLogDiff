@@ -7,6 +7,9 @@ from core.syslogger import logger
 from core.constants import Const
 from core.utility import Utility
 
+from .sys_config_manager import ConfigManager
+
+
 class NetworkLogInventoryManager:
     FOLDER_PATH: Final = "data"
     FILENAME: Final = "network_inventory.json"
@@ -15,52 +18,22 @@ class NetworkLogInventoryManager:
     
     def __init__(self):
         self.__data = {}
+        self.file_path = Path(self.FOLDER_PATH) / self.FILENAME
         self.init_import_data()
         
     def init_import_data(self):
         path = Path(self.FOLDER_PATH) / self.FILENAME
         
         if path.exists():
-            self.fetch()
+            self.__data = ConfigManager.import_json(self.file_path)
                 
         else:
             logger.info("Network log inventory does not exist. New file will be created.")
-            self.write()
+            ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
         
-    def fetch(self):
-        logger.info("Importing data for table.")
-        
-        try:            
-            path = Path(self.FOLDER_PATH) / self.FILENAME
-            
-            with open(path, mode="r", encoding="utf-8") as file:
-                self.__data = json.load(file)
-                logger.info("Table data successfuly imported.")
-                
-        except Exception as e:
-            logger.error(f"Unexpected error during import: {e}")
-            self.reset_data()
-    
     def update(self, hostname:str , column: str, value: bool) -> None:
         self.__data.setdefault(hostname, {})[column] = value
-    
-    def write(self):
-        try:
-            if not Utility.create_directory(self.FOLDER_PATH):
-                raise OSError(f"Failed to created directory: {self.FOLDER_PATH}")
-            
-            path = Path(self.FOLDER_PATH) / self.FILENAME
-            
-            with open(path, mode="w", encoding="utf-8") as file:
-                json.dump(self.__data, file, indent=4)
-                
-            logger.info("Network inventory has been successfully updated.")
-            return True
         
-        except Exception as e:
-            logger.error(f"Error encountered: {e}")
-            return False
-    
     def bulk_update(self, log_result: dict):
         logger.info("Bulk update of network inventory.")
         
@@ -93,11 +66,8 @@ class NetworkLogInventoryManager:
                         
                     self.update(host, col, status)
         
-        self.write()
+        ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
     
-    def reset_data(self):
-        self.__data = {}
-        
     def __iter__(self):
         return iter(self.__data)
     
@@ -128,8 +98,8 @@ class NetworkLogInventoryManager:
                 else:
                     self.update(hostname, self.LOG, False)
                     
-            self.write()
-            self.fetch()
+            ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
+            self.__data = ConfigManager.import_json(self.file_path)
     
     def set_host_default_column_values(self, hostname: str, columns: List[str]) -> None:
         self.__data.setdefault(hostname, {})
@@ -149,11 +119,10 @@ class NetworkLogInventoryManager:
         
         for device in device_configs:
             is_reachable = device["hostname"] in reachable_devices
-            print(device["hostname"], self.RCHBLTY, is_reachable)
             self.update(device["hostname"], self.RCHBLTY, is_reachable)
             
-        self.write()
-        self.fetch()
+        ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
+        self.__data = ConfigManager.import_json(self.file_path)
         
     def sync_data(self, hostnames: List[str], show_commands: List[str]) -> None:
         logger.info("Sync network inventory.")
@@ -181,7 +150,7 @@ class NetworkLogInventoryManager:
                     self.set_host_default_column_values(hostname, new_columns)
                     
         # Update network inventory
-        self.write()
+        ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
         
         
     
