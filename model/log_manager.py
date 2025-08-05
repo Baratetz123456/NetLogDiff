@@ -11,7 +11,7 @@ from core.utility import Utility
 from .sys_config_manager import ConfigManager
 
 from .log_comparison_manager import LogComparisonManager
-from .network_device_manager import NetworkDeviceManager
+from .network_device_connection_manager import NetworkDeviceConnectionManager
 
 class LogManager:
     def __init__(self):
@@ -32,12 +32,12 @@ class LogManager:
         collection_flag = False
         self.reachable_devices = []
         
-        transformed_configs = NetworkDeviceManager.transform_config(device_configs)
+        transformed_configs = NetworkDeviceConnectionManager.transform_config(device_configs)
         
         for hostname, device in transformed_configs.items():
             self.device_log_stats.setdefault(hostname, [])
             
-            with NetworkDeviceManager(device) as net_manager:
+            with NetworkDeviceConnectionManager(device) as net_manager:
                 net_manager.connect()
                 
                 if not net_manager.connection:

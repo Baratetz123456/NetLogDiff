@@ -101,34 +101,6 @@ class ViewModel:
     def get_log_comparison_timestamp(self) -> str:
         return self.exec_timestamp.log_comparison_timestamp
 
-    def collect_logs_helper(self):
-        # Collect logs by sending show commands to network devices
-        commands = self.device_config.hostname_with_commands
-        result = self.log_model.collect_logs(self.device_config, commands)
-    
-        # Update reachability status of devices in the table
-        self.net_inventory.get_reachable_devices_status(self.device_config, self.log_model.reachable_devices)
-        
-        # Update the log collection status for table data
-        self.net_inventory.update_log_collection_stats(self.log_model.device_log_stats)
-
-        # Update execution timestamp
-        shared_timestamp_service.refresh()
-        timestamp = shared_timestamp_service.generate_timestamp()
-        self.exec_timestamp.update_log_collection_timestamp(timestamp)
-
-        if result == Const.LOG_COLL_BAD or result == Const.LOG_COLL_SKIP:
-            self.collect_status.set(result)
-            return
-
-        hostname_with_logs = self.log_model.get_hostname_with_logs()
-        host_paths = Utility.generate_host_paths(hostname_with_logs)
-
-        # Store collected logs as log file
-        self.log_model.store_network_logs(host_paths)
-
-        self.collect_status.set(result)
-
     def load_pre_log_files(self, folder_path: str):
         # Check if any hostnames have show command configs
         if not self.device_config.has_hostnames_with_commands():
@@ -188,27 +160,13 @@ class ViewModel:
 
         # Save filtered logs
         self.log_model.post_logs = filtered_logs
-
-    def compare_logs_helper(self):
-        result = self.log_model.compare_logs()
-        
-        if result == Const.COMP_LOG_GOOD:
-            # Update log inventory with comparison result
-            self.log_inventory.update(self.log_model.comparison_result)
-
-            log_results = self.log_inventory.get_log_data()
-
-            # Sync updates of log inventory to network inventory for table data
-            self.net_inventory.bulk_update(log_results)
-
-            # Update execution timestamp
-            shared_timestamp_service.refresh()
-            timestamp = shared_timestamp_service.generate_timestamp()
-            self.exec_timestamp.update_log_comparison_timestamp(timestamp)
-
-        self.compare_status.set(result)
         
     def export_comparison_logs(self, path: str) -> None:
+        """
+        Export the comparison logs to the specified path.
+        
+        :param path: The destination directory where the logs will be exported.
+        """
         logger.info("Export log comparison result.")
         path = Path(path)
 
@@ -227,3 +185,97 @@ class ViewModel:
         export_result = Utility.export(path, logs_to_export)
 
         self.export_status.set(export_result)
+        
+    def compare_logs_helper(self) -> None:
+        """
+        Handles the process of comparing logs, updating the inventories, and refreshing the timestamp.
+        It updates the comparison status and notifies the View.
+        """
+        try:
+            # Perform the log comparison using the Model
+            result = self.log_model.compare_logs()
+
+            if result == Const.COMP_LOG_GOOD:
+                # If comparison is successful, update inventories
+                self._update_log_inventory()
+
+                # Sync with network inventory
+                log_results = self.log_inventory.get_log_data()
+                self.net_inventory.bulk_update(log_results)
+
+                # Update execution timestamp after comparison
+                self._update_comparison_timestamp()
+
+            # Set the result of the comparison (can be displayed in the UI)
+            self.compare_status.set(result)
+
+        except Exception as e:
+            # Handle any errors gracefully and set status to indicate failure
+            logger.error(f"Error during log comparison: {e}")
+            self.compare_status.set(Const.COMP_LOG_BAD)
+            raise
+
+    def _update_log_inventory(self) -> None:
+        """Updates the log inventory with the comparison result."""
+        self.log_inventory.update(self.log_model.comparison_result)
+
+    def _update_comparison_timestamp(self) -> None:
+        """Refreshes the execution timestamp and updates the comparison timestamp."""
+        shared_timestamp_service.refresh()
+        timestamp = shared_timestamp_service.generate_readable_format()
+        self.exec_timestamp.update_log_comparison_timestamp(timestamp)
+    
+    def collect_logs_helper(self) -> None:
+        """
+        Orchestrates the collection of logs from network devices, updates status, 
+        and stores collected logs. Updates timestamps and statuses.
+        """
+        try:
+            # Collect logs using the Model
+            commands = self.device_config.hostname_with_commands
+            result = self.log_model.collect_logs(self.device_config, commands)
+
+            # Handle potential errors or skipped collection
+            if result == Const.LOG_COLL_BAD or result == Const.LOG_COLL_SKIP:
+                self.collect_status.set(result)
+                return
+
+            # Update network device reachability status
+            self._update_device_reachability()
+
+            # Update log collection statistics in the inventory
+            self._update_log_collection_stats()
+
+            # Store collected logs
+            self._store_collected_logs()
+
+            # Update the execution timestamp after collecting logs
+            self._update_collection_timestamp()
+
+            # Set the final collection status
+            self.collect_status.set(result)
+
+        except Exception as e:
+            logger.error(f"Error occurred during log collection: {e}")
+            self.collect_status.set(Const.LOG_COLL_BAD)
+            raise
+
+    def _update_device_reachability(self) -> None:
+        """Update the reachability status of devices."""
+        self.net_inventory.get_reachable_devices_status(self.device_config, self.log_model.reachable_devices)
+
+    def _update_log_collection_stats(self) -> None:
+        """Update the log collection statistics in the network inventory."""
+        self.net_inventory.update_log_collection_stats(self.log_model.device_log_stats)
+
+    def _store_collected_logs(self) -> None:
+        """Store the collected logs as files."""
+        hostname_with_logs = self.log_model.get_hostname_with_logs()
+        host_paths = Utility.generate_host_paths(hostname_with_logs)
+        self.log_model.store_network_logs(host_paths)
+
+    def _update_collection_timestamp(self) -> None:
+        """Update the timestamp of the log collection."""
+        shared_timestamp_service.refresh()
+        timestamp = shared_timestamp_service.generate_readable_format()
+        self.exec_timestamp.update_log_collection_timestamp(timestamp)

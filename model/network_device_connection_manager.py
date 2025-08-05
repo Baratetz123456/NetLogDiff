@@ -4,7 +4,7 @@ from typing import Dict, List
 from core.syslogger import logger
 
 
-class NetworkDeviceManager:
+class NetworkDeviceConnectionManager:
     def __init__(self, device_params):
         self.device_params = device_params
         self.connection = None
@@ -28,6 +28,10 @@ class NetworkDeviceManager:
             
         except NetmikoTimeoutException as e:
             logger.error(f"Connection failed: {e}")
+            raise
+        
+        except Exception as e:
+            logger.error(f"Failed to connect to {self.device_params['host']}: {e}")
             raise
 
     def run_show_command(self, command):
