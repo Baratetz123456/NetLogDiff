@@ -1,0 +1,8 @@
+{
+    "window_title": "NetLogDiff",
+    "window_height": 800,
+    "window_width": 1700,
+    "icon_path": "icon/technology.ico",
+    "button_font": "Arial",
+    "label_font": "Arial"
+}
