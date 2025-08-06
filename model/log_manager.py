@@ -36,30 +36,33 @@ class LogManager:
         
         for hostname, device in transformed_configs.items():
             self.device_log_stats.setdefault(hostname, [])
+            show_commands = device_show_commands.get(hostname)
             
-            with NetworkDeviceConnectionManager(device) as net_manager:
-                net_manager.connect()
-                
-                if not net_manager.connection:
-                    continue
-                
-                self.reachable_devices.append(hostname)                
-                show_commands = device_show_commands.get(hostname)
-                
-                if show_commands is None:
-                    logger.error(f"No show commands for hostname: {hostname}")
-                    self.device_log_stats.update({hostname: []})
-                    continue
+            if show_commands is None:
+                logger.error(f"No show commands for hostname: {hostname}")
+                self.device_log_stats.update({hostname: []})
+                continue
             
-                log_output = net_manager.run_multiple_commands(show_commands)
-                
-                if not log_output:
-                    logger.warning(f"No network logs generated for {hostname}.")
-                    self.device_log_stats.update({hostname: log_output})
-                    continue
-                
-                collection_flag = True
+            log_output = None
+            
+            try:
+                with NetworkDeviceConnectionManager(device) as net_manager:                    
+                    net_manager.connect()
+                    log_output = net_manager.run_multiple_commands(show_commands)
+                        
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                continue
+            
+            self.reachable_devices.append(hostname)                
+            
+            if not log_output:
+                logger.warning(f"No network logs generated for {hostname}.")
                 self.device_log_stats.update({hostname: log_output})
+                continue
+            
+            collection_flag = True
+            self.device_log_stats.update({hostname: log_output})
                         
         if collection_flag:
             return Const.LOG_COLL_GOOD

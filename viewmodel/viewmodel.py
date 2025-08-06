@@ -230,40 +230,28 @@ class ViewModel:
         Orchestrates the collection of logs from network devices, updates status, 
         and stores collected logs. Updates timestamps and statuses.
         """
-        try:
-            # Collect logs using the Model
-            commands = self.device_config.hostname_with_commands
-            result = self.log_model.collect_logs(self.device_config, commands)
+        # Collect logs using the Model
+        commands = self.device_config.hostname_with_commands
+        result = self.log_model.collect_logs(self.device_config, commands)
 
-            # Handle potential errors or skipped collection
-            if result == Const.LOG_COLL_BAD or result == Const.LOG_COLL_SKIP:
-                self.collect_status.set(result)
-                return
+        # Update network device reachability status
+        self._update_device_reachability()
+        
+        # Update log collection statistics in the inventory
+        self._update_log_collection_stats()
 
-            # Update network device reachability status
-            self._update_device_reachability()
+        # Store collected logs
+        self._store_collected_logs()
 
-            # Update log collection statistics in the inventory
-            self._update_log_collection_stats()
-
-            # Store collected logs
-            self._store_collected_logs()
-
-            # Update the execution timestamp after collecting logs
-            self._update_collection_timestamp()
-
-            # Set the final collection status
-            self.collect_status.set(result)
-
-        except Exception as e:
-            logger.error(f"Error occurred during log collection: {e}")
-            self.collect_status.set(Const.LOG_COLL_BAD)
-            raise
-
+        # Update the execution timestamp after collecting logs
+        self._update_collection_timestamp()
+                
+        self.collect_status.set(result)
+        
     def _update_device_reachability(self) -> None:
         """Update the reachability status of devices."""
         self.net_inventory.get_reachable_devices_status(self.device_config, self.log_model.reachable_devices)
-
+        
     def _update_log_collection_stats(self) -> None:
         """Update the log collection statistics in the network inventory."""
         self.net_inventory.update_log_collection_stats(self.log_model.device_log_stats)
