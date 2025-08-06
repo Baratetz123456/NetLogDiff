@@ -12,20 +12,14 @@ from core.timestamp_services import shared_timestamp_service
 
 class Utility:
     @staticmethod
-    def resource_path(relative_path: str) -> str:
-        """Get the absolute path to resource
-
-        Args:
-            relative_path (str): path
-        """
-        
+    def resource_path(relative_path: str) -> Path:
+        """Get the absolute path to a bundled resource."""
         try:
-            base_path = sys._MEIPASS
-        
-        except Exception:
-            base_path = os.path.abspath(".")
-            
-        return os.path.join(base_path, relative_path)
+            base_path = Path(sys._MEIPASS)
+        except AttributeError:
+            base_path = Path.cwd()
+
+        return base_path / relative_path
 
     @staticmethod
     def create_directory(path: str) -> bool:
@@ -69,7 +63,7 @@ class Utility:
     
     @classmethod
     def export(cls, path, logs: dict) -> str:
-        logger.info("Exporting logs.test")
+        logger.info("Exporting logs.")
         
         dt_hm = shared_timestamp_service.generate_timestamp()
         filename = f"comparison_log_{dt_hm}.zip"

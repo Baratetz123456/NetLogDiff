@@ -180,14 +180,14 @@ class DeviceConfigManager:
             # Return commands for the specified hostname if it exists
             return self.hostname_with_commands.get(hostname, [])
 
-        # Collect all commands from all hostnames and ensure uniqueness while preserving order
+        # Collect all commands from all hostnames
         commands = []
         
         for host_commands in self.hostname_with_commands.values():
             commands.extend(host_commands)
 
-        # Remove duplicates while maintaining the order of appearance
-        return list(dict.fromkeys(commands))
+        # Remove duplicates
+        return list(dict.fromkeys(sorted(commands)))
 
     def filter_hosts_with_commands(self, hosts_to_check: Dict[str, str]) -> Dict[str, str]:
         """

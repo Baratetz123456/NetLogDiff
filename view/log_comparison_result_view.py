@@ -68,13 +68,22 @@ class LogComparisonResultView:
                 
                 # Words that are inserted (only on the modified side)
                 elif op == "insert":
-                    self.log_panel.postlog_panel.insert("end", "".join(modified[j1:j2]), Const.TAG_A)
-                    
                     if not original.strip():
                         self.log_panel.prelog_panel.insert("end", self.get_blank_lines(modified), Const.TAG_AB)
-                
+                        
+                    if not modified.strip():
+                        self.log_panel.postlog_panel.insert("end", self.get_blank_lines(modified), Const.TAG_A)
+                    else:
+                        self.log_panel.postlog_panel.insert("end", "".join(modified[j1:j2]), Const.TAG_A)
+                        
                 elif op == "delete":
-                    self.log_panel.postlog_panel.insert("end", self.get_blank_lines(original), Const.TAG_RMB)
+                    if not modified.strip():
+                        self.log_panel.postlog_panel.insert("end", self.get_blank_lines(original), Const.TAG_RMB)
+                    
+                    if not original.strip():
+                        self.log_panel.prelog_panel.insert("end", self.get_blank_lines(original), Const.TAG_RM)
+                    else:
+                        self.log_panel.prelog_panel.insert("end", "".join(original[i1:i2]), Const.TAG_RM)
            
             self.log_panel.prelog_panel.insert("end", "\n")
             self.log_panel.postlog_panel.insert("end", "\n")
