@@ -18,14 +18,11 @@ class MainView(tk.Tk):
     def __init__(self):
         super().__init__()
         self.vm = self.create_viewmodel()
-        
+
         if not self.vm:
             self.destroy()
             return
 
-        if not self.validate_screen_resolution():
-            return
-        
         if not self.set_window_dimensions():
             return
 
@@ -33,10 +30,10 @@ class MainView(tk.Tk):
 
         if not self.set_window_title():
             return
-        
+
         if not self.set_icon():
             return
-        
+
         set_window_center(self)
         self.config_style()
 
@@ -49,30 +46,66 @@ class MainView(tk.Tk):
         )
         self.paned.pack(fill=tk.BOTH, expand=True)
 
-        left_frame = ttk.Frame(self.paned)
-        right_frame = ttk.Frame(self.paned)
+        self.left_frame = ttk.Frame(self.paned)
+        self.right_frame = ttk.Frame(self.paned)
 
-        self.paned.add(left_frame, minsize=50)
-        self.paned.add(right_frame, minsize=50)
+        self.paned.add(self.left_frame, minsize=180)
+        self.paned.add(self.right_frame, minsize=200)
 
-        log_cmp_res = LogComparisonResultView(right_frame, self.vm)
-        device_status_tbl = DeviceStatusTableView(left_frame, self.vm, log_cmp_res)
+        log_cmp_res = LogComparisonResultView(self.right_frame, self.vm)
+        self.device_status_tbl = DeviceStatusTableView(
+            self.left_frame, self.vm, log_cmp_res
+        )
 
         self.setup_traces()
 
-        self.after(100, lambda: self.paned.sash_place(0, 850, 0))
-        
+        self.bind("<Configure>", self.on_resize)
+        # Bind to sash movement (mouse drag with button 1)
+        self.paned.bind("<B1-Motion>", self.on_resize)
+        # Place sash in the middle of winow
+        self.paned.bind("<Configure>", self.place_sash_middle)
+
+    def on_resize(self, event):
+        # If window width is less than 1380px -> collapse into burger menu
+        # If left frame width is less than 577 -> collapse into burger menu
+        if self.left_frame.winfo_width() < 577:
+            self.device_status_tbl.show_menu_button()
+        else:
+            self.device_status_tbl.hide_menu_button()
+
+    def toggle_menu(self):
+        if self.device_status_tbl.burger_btn.winfo_ismapped():
+            # Hide menu button
+            self.device_status_tbl.burger_btn.pack_forget()
+        else:
+            # Show menu button
+            self.device_status_tbl.burger_btn.pack(side=tk.RIGHT, fill="y")
+
+    def place_sash_middle(self, event=None):
+        if self.paned.cget("orient") == tk.HORIZONTAL:
+            # Place sash horizontally in the middle
+            self.paned.sash_place(0, self.paned.winfo_width() // 2, 0)
+
     def create_viewmodel(self):
         try:
             return ViewModel()
-            
+
         except Exception as e:
             show_message(Const.INIT_ERROR, msg=e)
             return
-            
+
     def config_style(self):
         style = ttk.Style()
         style.configure("TButton", padding=10)
+        style.configure(
+            "Big.TMenubutton",
+            padding=(10, 10),
+            font=("Arial", 14),
+            borderwith=5,
+            relief="solid",
+            foreground="black",
+            background="white",
+        )
 
     def set_window_dimensions(self):
         width, height = self.vm.get_window_dimensions_helper()
@@ -82,7 +115,11 @@ class MainView(tk.Tk):
             self.destroy()
             return False
 
-        self.geometry(f"{width}x{height}")
+        screen_width = int(self.winfo_screenwidth() * width)
+        screen_height = int(self.winfo_screenheight() * height)
+
+        self.geometry(f"{screen_width}x{screen_height}")
+        self.minsize(width=400, height=400)
         return True
 
     def set_window_title(self):
@@ -107,30 +144,6 @@ class MainView(tk.Tk):
         self.iconbitmap(icon_path)
         return True
 
-    def validate_screen_resolution(self) -> bool:
-        width, height = self.vm.get_window_dimensions_helper()
-
-        if width is None or height is None:
-            logger.error(
-                "Window dimensions could not be determined for screen resolution check."
-            )
-            self.destroy()
-            return False
-
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-
-        if screen_width < width or screen_height < height:
-            show_message(
-                Const.WINDOW_ERROR,
-                screen_width=screen_width,
-                screen_height=screen_height,
-            )
-            self.destroy()
-            return False
-
-        return True
-
     def setup_traces(self):
         for var in [
             self.vm.collect_status,
@@ -141,7 +154,7 @@ class MainView(tk.Tk):
             self.vm.pre_log_status,
         ]:
             var.trace_add("write", partial(self.show_status_message, var))
-            
+
     def show_status_message(self, var, *args):
         status = var.get()
         show_message(status)

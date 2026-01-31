@@ -26,8 +26,8 @@ class SystemConfigManager:
 
     def get_window_dimensions(self) -> tuple[int, int]:
         """Get window dimensions (width, height)."""
-        height = self.__data.get("window_height", 800)
-        width = self.__data.get("window_width", 1700)
+        height = self.__data.get("window_height", 0.5)
+        width = self.__data.get("window_width", 0.5)
 
         return width, height
 
