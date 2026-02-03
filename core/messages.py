@@ -7,6 +7,7 @@ MESSAGE_MAP = {
     Const.LOG_COLL_GOOD:      ("info", "Log collection", "Log collection is completed."),
     Const.LOG_COLL_BAD:       ("error", "Log collection", "Log collection failed."),
     Const.LOG_COLL_SKIP:      ("error", "Log collection", "No reachable network device."),
+    Const.LOG_COLL_STOPPED:   ("warning", "Log collection", "Log collection stopped."),
 
     # Log comparison
     Const.COMP_LOG_GOOD:      ("info", "Log comparison", "Log comparison is completed."),
@@ -67,5 +68,8 @@ def show_message(msg_type: str, **kwargs):
         elif level == "error":
             messagebox.showerror(title, msg)
             logger.error(msg)
+        elif level == "warning":
+            messagebox.showwarning(title, msg)
+            logger.warning(msg)
     else:
         logger.warning(f"Unknown message type: {msg_type}")

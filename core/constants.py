@@ -51,6 +51,7 @@ class Const:
     LOG_COLL_FILE_SAVE_GOOD: Final = "log_collection_file_save_successful"
     LOG_COLL_FILE_SAVE_BAD: Final = "log_collection_file_save_failed"
     LOG_COLL_SKIP: Final = "log_collection_skipped"
+    LOG_COLL_STOPPED: Final = "log_collection_stopped"
     
     SSH_CONN: Final = "ssh"
     TELNET_CONN: Final = "telnet"

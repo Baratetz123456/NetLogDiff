@@ -6,6 +6,8 @@ from core.constants import Const
 from core.syslogger import logger
 from core.messages import show_message
 
+from .progress import LogCollectionProgressBar
+
 
 class DeviceStatusTableView:
     def __init__(self, parent, vm, log_cmp_res):
@@ -54,6 +56,9 @@ class DeviceStatusTableView:
 
         self.display_execution_timestamp()
         self.populate_table(vm.get_table_data())
+
+        # Progress display
+        self.log_collection_progress_bar = LogCollectionProgressBar(self.parent)
 
     def create_main_buttons(self, left_frame, right_frame):
         self.collect_logs_btn = ttk.Button(
@@ -205,7 +210,15 @@ class DeviceStatusTableView:
         return new_list
 
     def collect_logs_helper(self):
+        # Display the progress bar
+        self.log_collection_progress_bar.display()
         self.vm.collect_logs_helper()
+
+        # Disable the root window until the progress window closed
+        if self.log_collection_progress_bar.top.winfo_exists():
+            self.log_collection_progress_bar.top.grab_set()
+            self.parent.winfo_toplevel().wait_window(self.log_collection_progress_bar.top)
+            
         self.reload_table_data()
 
     def compare_logs_helper(self):

@@ -1,6 +1,7 @@
 import tkinter as tk
 from pathlib import Path
 from typing import Dict, List
+from threading import Thread, Event
 
 from core.syslogger import logger
 from core.constants import Const
@@ -30,6 +31,26 @@ class ViewModel:
         self.import_log_inventory()
 
         self.sync_net_inventory_data()
+
+        self.log_model.set_progress_notification(self.report_progress)
+        self.net_inventory.set_progress_notification(self.report_progress)
+    
+    def set_view(self, view):
+        self.view = view
+    
+    def stop_task_thread(self):
+        logger.info("Stopping task_thread.")
+        self.stop_event.set()
+
+    def report_progress(self):
+        self.completed_loops += 1
+        overall_progress = (self.completed_loops / self.total_loops) * 100
+
+        logger.info(f"Complete Loops: {self.completed_loops}")
+        logger.info(f"Total Loops: {self.total_loops}")
+        logger.info(f"Overall progress: {overall_progress}")
+
+        self.view.after(0, self.view.update_progress_bar_helper, overall_progress)
 
     def import_device_config(self) -> bool:
         """
@@ -191,6 +212,7 @@ class ViewModel:
         Handles the process of comparing logs, updating the inventories, and refreshing the timestamp.
         It updates the comparison status and notifies the View.
         """
+        
         try:
             # Perform the log comparison using the Model
             result = self.log_model.compare_logs()
@@ -230,23 +252,60 @@ class ViewModel:
         Orchestrates the collection of logs from network devices, updates status, 
         and stores collected logs. Updates timestamps and statuses.
         """
-        # Collect logs using the Model
-        commands = self.device_config.hostname_with_commands
-        result = self.log_model.collect_logs(self.device_config, commands)
-
-        # Update network device reachability status
-        self._update_device_reachability()
+        if not self.view.is_progress_window_alive():
+            return
         
-        # Update log collection statistics in the inventory
-        self._update_log_collection_stats()
+        # Task count represents the number of methods executed per device
+        task_count = 4
+        self.total_loops = len(self.device_config) * task_count
+        self.completed_loops = 0
+        self.stop_event = Event()
 
-        # Store collected logs
-        self._store_collected_logs()
+        self.log_model.set_stop_event(self.stop_event)
+        self.net_inventory.set_stop_event(self.stop_event)
 
-        # Update the execution timestamp after collecting logs
-        self._update_collection_timestamp()
-                
-        self.collect_status.set(result)
+        def collect_logs_task():
+            # Collect logs using the Model
+            commands = self.device_config.hostname_with_commands
+            result = self.log_model.collect_logs(self.device_config, commands)
+            
+            if self.stop_event.is_set():
+                self.collect_status.set(Const.LOG_COLL_STOPPED)
+                logger.info("Task stopped during log collection.")
+                return
+
+            # Update network device reachability status
+            self._update_device_reachability()
+            
+            if self.stop_event.is_set():
+                self.collect_status.set(Const.LOG_COLL_STOPPED)
+                logger.info("Task stopped during device reachability update.")
+                return
+            
+            # Update log collection statistics in the inventory
+            self._update_log_collection_stats()
+
+            if self.stop_event.is_set():
+                self.collect_status.set(Const.LOG_COLL_STOPPED)
+                logger.info("Task stopped during log collection status update.")
+                return
+            
+            # Store collected logs
+            self._store_collected_logs()
+
+            if self.stop_event.is_set():
+                self.collect_status.set(Const.LOG_COLL_STOPPED)
+                logger.info("Task stopped while storing collected logs.")
+                return
+
+            # Update the execution timestamp after collecting logs
+            self._update_collection_timestamp()
+                    
+            self.collect_status.set(result)
+        
+        # Run the task in a background thread
+        self.task_thread = Thread(target=collect_logs_task, daemon=True)
+        self.task_thread.start()
         
     def _update_device_reachability(self) -> None:
         """Update the reachability status of devices."""
