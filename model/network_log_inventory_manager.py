@@ -48,13 +48,13 @@ class NetworkLogInventoryManager:
                 if col in (self.RCHBLTY, self.LOG):
                     continue
                                 
-            status = "-"
+                status = "-"
 
-            if log_result and host in log_result:
-                if log_result[host] and col in log_result[host]:                    
-                    status = log_result[host][col].get("status", "-")
+                if log_result and host in log_result:
+                    if log_result[host] and col in log_result[host]:
+                        status = log_result[host][col].get("status", "-")
                 
-            self.update(host, col, status)
+                self.update(host, col, status)
         
         ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
     
@@ -137,6 +137,9 @@ class NetworkLogInventoryManager:
             logger.warning("No show_commands found.")
             return
         
+        # Remove old hostnames that are not in the latest configuration
+        self._sanitize_hostname(hostnames)
+
         for hostname in hostnames:
             if hostname not in self.__data:
                 self.set_host_default_column_values(hostname, show_commands)
@@ -153,7 +156,10 @@ class NetworkLogInventoryManager:
                     
         # Update network inventory
         ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
-        
+    
+    def _sanitize_hostname(self, new_hostnames: List[str]):
+        self.__data = {k: v for k, v in self.__data.items() if k in new_hostnames}
+
     def set_progress_notification(self, func: callable):
         if not callable(func):
             logger.error("func must be callable")
@@ -167,6 +173,7 @@ class NetworkLogInventoryManager:
             raise TypeError("event must be a threading.Event")
         
         self.stop_event = event    
+
     
     
     

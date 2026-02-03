@@ -164,8 +164,12 @@ class MainView(tk.Tk):
             self.close_progress_bar_helper()
     
     def is_progress_window_alive(self):
-        return self.device_status_tbl.log_collection_progress_bar.top.winfo_exists()
-    
+        progress_bar = getattr(self.device_status_tbl, "log_collection_progress_bar", None)
+        if not progress_bar or not hasattr(progress_bar, "top") or progress_bar.top is None:
+            return False
+        
+        return bool(progress_bar.top.winfo_exists())
+
     def update_progress_bar_helper(self, value):
         return self.device_status_tbl.log_collection_progress_bar.update_progress(value)
     
