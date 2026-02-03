@@ -1,3 +1,2 @@
 hostname,ipaddress,username,password,admin_password,device_os,connection_type,skip,show_commands
-router01,192.168.178.2,admin,cisco123,cisco123,cisco_ios,telnet,FALSE,cisco_ios.txt
-switch01,192.168.178.3,admin,cisco123,cisco123,cisco_ios,telnet,FALSE,cisco_ios.txt
+devnetsandboxiosxec8k.cisco.com,,baratetajayson01,F0Y__83WTzZv5dc,F0Y__83WTzZv5dc,cisco_ios,ssh,FALSE,cisco_ios.txt

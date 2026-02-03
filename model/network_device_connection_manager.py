@@ -73,7 +73,7 @@ class NetworkDeviceConnectionManager:
             try:
                 transformed = cls.construct_config(device)
                 transformed_config.update({device["hostname"]: transformed})
-            
+                
             except Exception as e:
                 logger.error(f"Missing key in device config: {e}")
             
@@ -86,7 +86,7 @@ class NetworkDeviceConnectionManager:
         device_type = f"{device_os}_telnet" if conn_type.strip().lower() == "telnet" else device_os
         return {
                 'device_type': device_type,
-                'host': device['ipaddress'],
+                'host': device['ipaddress'] if len(device['ipaddress']) >= 6 else device['hostname'],
                 'username': device['username'],
                 'password': device['password'],
                 'secret': device['admin_password']

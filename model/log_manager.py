@@ -2,7 +2,7 @@ import re
 import os
 from pathlib import Path
 from typing import Dict, List, Final
-from netmiko import ConnectHandler
+import threading
 
 from core.syslogger import logger
 from core.constants import Const
@@ -13,6 +13,7 @@ from .sys_config_manager import ConfigManager
 from .log_comparison_manager import LogComparisonManager
 from .network_device_connection_manager import NetworkDeviceConnectionManager
 
+
 class LogManager:
     def __init__(self):
         self.pre_logs = {}
@@ -20,6 +21,8 @@ class LogManager:
         self.device_log_stats = {}
         self.comparison_result = {}
         self.reachable_devices = []
+        self.stop_event = None
+        self.notify_progress = None
         
     def collect_logs(self, device_configs, device_show_commands: Dict[str, str]):
         if not device_configs:
@@ -35,6 +38,12 @@ class LogManager:
         transformed_configs = NetworkDeviceConnectionManager.transform_config(device_configs)
         
         for hostname, device in transformed_configs.items():
+            if self.stop_event.is_set():
+                logger.info("Log collection is stopping...")
+                return
+            
+            self.notify_progress()
+
             self.device_log_stats.setdefault(hostname, [])
             show_commands = device_show_commands.get(hostname)
             
@@ -115,6 +124,12 @@ class LogManager:
         flag = False
         
         for hostname, log in self.device_log_stats.items():
+            if self.stop_event.is_set():
+                logger.info("Storing network logs is stopping...")
+                return
+
+            self.notify_progress()
+
             file_path = host_paths.get(hostname)
             
             if file_path is None:
@@ -152,3 +167,17 @@ class LogManager:
                 logger.error(msg)
         
         return output
+
+    def set_progress_notification(self, func: callable):
+        if not callable(func):
+            logger.error("func must be callable")
+            raise TypeError("func must be callable")
+
+        self.notify_progress = func
+
+    def set_stop_event(self, event: threading.Event):
+        if not isinstance(event, threading.Event):
+            logger.error("event must be a threading.Event")
+            raise TypeError("event must be a threading.Event")
+        
+        self.stop_event = event

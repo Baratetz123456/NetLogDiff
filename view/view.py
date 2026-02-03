@@ -8,7 +8,6 @@ from core.syslogger import logger
 from core.constants import Const
 from core.messages import show_message
 
-# from .log_panel_view import LogPanelView
 from .utility_view import set_window_center
 from .log_comparison_result_view import LogComparisonResultView
 from .device_status_table_view import DeviceStatusTableView
@@ -22,6 +21,8 @@ class MainView(tk.Tk):
         if not self.vm:
             self.destroy()
             return
+
+        self.vm.set_view(self)
 
         if not self.set_window_dimensions():
             return
@@ -158,3 +159,19 @@ class MainView(tk.Tk):
     def show_status_message(self, var, *args):
         status = var.get()
         show_message(status)
+
+        if self.is_progress_window_alive():
+            self.close_progress_bar_helper()
+    
+    def is_progress_window_alive(self):
+        progress_bar = getattr(self.device_status_tbl, "log_collection_progress_bar", None)
+        if not progress_bar or not hasattr(progress_bar, "top") or progress_bar.top is None:
+            return False
+        
+        return bool(progress_bar.top.winfo_exists())
+
+    def update_progress_bar_helper(self, value):
+        return self.device_status_tbl.log_collection_progress_bar.update_progress(value)
+    
+    def close_progress_bar_helper(self):
+        self.device_status_tbl.log_collection_progress_bar.close()

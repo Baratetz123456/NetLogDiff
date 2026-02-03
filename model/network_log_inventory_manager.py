@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from netmiko import ConnectHandler
+import threading
 from typing import Final, List, Dict
 
 from core.syslogger import logger
@@ -20,6 +20,8 @@ class NetworkLogInventoryManager:
         self.__data = {}
         self.file_path = Path(self.FOLDER_PATH) / self.FILENAME
         self.init_import_data()
+        self.stop_event = None
+        self.notify_progress = None
         
     def init_import_data(self):
         path = Path(self.FOLDER_PATH) / self.FILENAME
@@ -37,34 +39,22 @@ class NetworkLogInventoryManager:
     def bulk_update(self, log_result: dict):
         logger.info("Bulk update of network inventory.")
         
-        if not (isinstance(log_result, dict) and log_result):
+        if log_result is not None and not isinstance(log_result, dict):
             logger.error(f"Invalid log result found: {log_result}")
             return
         
-        for host, columns, in self.__data.items():
-            if log_result is None:
-                for col, _ in columns.items():
-                    if col != self.RCHBLTY and col != self.LOG:
-                        self.update(host, col, "-")
-            
-            else:
-                for col, _ in columns.items():
-                    if col == self.RCHBLTY or col == self.LOG:
-                        continue
-                    
-                    status = "-"
-                    sh_data = log_result.get(host)
-                    
-                    if sh_data is None:
-                        self.update(host, col, status)
-                        continue
-                        
-                    sh_result = sh_data.get(col)
-                    
-                    if sh_result is not None:
-                        status = sh_result.get("status", "-")
-                        
-                    self.update(host, col, status)
+        for host, columns in self.__data.items():
+            for col, _ in columns.items():
+                if col in (self.RCHBLTY, self.LOG):
+                    continue
+                                
+                status = "-"
+
+                if log_result and host in log_result:
+                    if log_result[host] and col in log_result[host]:
+                        status = log_result[host][col].get("status", "-")
+                
+                self.update(host, col, status)
         
         ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
     
@@ -93,6 +83,12 @@ class NetworkLogInventoryManager:
         
         if isinstance(device_log_stats, dict) and device_log_stats:
             for hostname, status in device_log_stats.items():
+                if self.stop_event.is_set():
+                    logger.info("Updating log collection stats is stopping...")
+                    return
+                
+                self.notify_progress()
+
                 if status:
                     self.update(hostname, self.LOG, True)
                 else:
@@ -118,6 +114,12 @@ class NetworkLogInventoryManager:
             return
         
         for device in device_configs:
+            if self.stop_event.is_set():
+                logger.info("Getting reachable devices status is stopping...")
+                return
+            
+            self.notify_progress()
+
             is_reachable = device["hostname"] in reachable_devices
             self.update(device["hostname"], self.RCHBLTY, is_reachable)
             
@@ -135,6 +137,9 @@ class NetworkLogInventoryManager:
             logger.warning("No show_commands found.")
             return
         
+        # Remove old hostnames that are not in the latest configuration
+        self._sanitize_hostname(hostnames)
+
         for hostname in hostnames:
             if hostname not in self.__data:
                 self.set_host_default_column_values(hostname, show_commands)
@@ -151,8 +156,24 @@ class NetworkLogInventoryManager:
                     
         # Update network inventory
         ConfigManager.write_json(self.FOLDER_PATH, self.FILENAME, self.__data)
+    
+    def _sanitize_hostname(self, new_hostnames: List[str]):
+        self.__data = {k: v for k, v in self.__data.items() if k in new_hostnames}
+
+    def set_progress_notification(self, func: callable):
+        if not callable(func):
+            logger.error("func must be callable")
+            raise TypeError("func must be callable")
+
+        self.notify_progress = func
+
+    def set_stop_event(self, event: threading.Event):
+        if not isinstance(event, threading.Event):
+            logger.error("event must be a threading.Event")
+            raise TypeError("event must be a threading.Event")
         
-        
+        self.stop_event = event    
+
     
     
     
